@@ -37,7 +37,8 @@ P[addon] = {
         font = "PT Sans Narrow",
         -- The text's height as a part of the spot's (Spot.lua), so party portraits get smaller text.
         size = 0.5,
-        -- Where on the spot the text sits, and how far from that point.
+        -- What the text is anchored to ("auto": the spot, Spot.lua), where on it, and how far off.
+        anchor = "auto",
         point = "CENTER",
         x = 0,
         y = 0,

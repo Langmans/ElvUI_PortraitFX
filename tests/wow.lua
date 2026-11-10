@@ -523,6 +523,7 @@ function NewClient(opts)
         -- ElvUI's oUF keeps the unit in __unit (Private.UpdateUnits); there is no frame.unit.
         frame.unitframeType, frame.__unit, frame.ORIENTATION = kind or unit, not noUnit and unit or nil, "LEFT"
         frame.Health = Region("StatusBar", frame)
+        frame.Power = Region("StatusBar", frame)
         frame.Health:SetSize(200, 40)
         local portrait = Region("PlayerModel", frame)
         portrait.backdrop = Region("Frame", frame)
@@ -544,6 +545,8 @@ function NewClient(opts)
         local frame = self.frames[unit]
         frame.USE_PORTRAIT = style ~= "none"
         frame.USE_PORTRAIT_OVERLAY = style == "overlay"
+        -- ElvUI's Configure_Portrait: portrait:SetShown(frame.USE_PORTRAIT).
+        frame.Portrait:SetShown(frame.USE_PORTRAIT)
         if self.loggedIn then UF:Configure_Portrait(frame) end
         return self
     end

@@ -9,6 +9,11 @@ local _, ns = ... ---@type string, AddonNamespace
 -- A spot's size when the client hides it or the frame is not laid out yet.
 ns.FALLBACK_SIZE = 32
 
+-- What the text can be anchored to, besides the spot ("auto"), in the options' order, and the
+-- frame's part each one is.
+ns.anchors = { "auto", "portrait", "health", "power", "frame" }
+local PARTS = { portrait = "Portrait", health = "Health", power = "Power" }
+
 -- The icon's point on the health bar, by ElvUI's frame orientation.
 local SIDES = { LEFT = "LEFT", RIGHT = "RIGHT", MIDDLE = "CENTER" }
 
@@ -33,4 +38,17 @@ function ns.Spot(frame)
     end
     local health = frame.Health
     return health, SIDES[frame.ORIENTATION] or "LEFT", Usable(health:GetHeight())
+end
+
+---The region the text is anchored to: the part of the frame set (the portrait itself, also as an
+---overlay; a bar; the whole frame), or the spot when set to auto or when the frame lacks or hides
+---that part.
+---@param frame AddonFrame
+---@return Region
+function ns.TextRegion(frame)
+    local anchor = ns.db().text.anchor
+    if anchor == "frame" then return frame end
+    local part = PARTS[anchor] and frame[PARTS[anchor]] --[[@as Region?]]
+    if part and part:IsShown() then return part end
+    return (ns.Spot(frame))
 end

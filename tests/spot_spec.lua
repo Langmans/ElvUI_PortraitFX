@@ -32,6 +32,31 @@ describe("the spot", function()
         assert.are.equal(frame.Health, (client.ns.Spot(frame)))
     end)
 
+    it("of the text can be another part of the frame, as set", function()
+        local client = NewClient():Style("target", "overlay")
+        local frame, text = client.frames.target, client:db().text
+        local spot = client.ns.Spot(frame)
+        assert.are.equal(spot, client.ns.TextRegion(frame), "auto: the spot")
+        text.anchor = "portrait"
+        assert.are.equal(frame.Portrait, client.ns.TextRegion(frame), "the portrait itself, also as overlay")
+        text.anchor = "health"
+        assert.are.equal(frame.Health, client.ns.TextRegion(frame))
+        text.anchor = "power"
+        assert.are.equal(frame.Power, client.ns.TextRegion(frame))
+        text.anchor = "frame"
+        assert.are.equal(frame, client.ns.TextRegion(frame))
+    end)
+
+    it("of the text falls back to the spot for a part the frame lacks or hides", function()
+        local client = NewClient():Style("focus", "none")
+        local frame, text = client.frames.focus, client:db().text
+        text.anchor = "portrait"
+        assert.are.equal(frame.Health, client.ns.TextRegion(frame), "no portrait shown")
+        frame.Power = nil
+        text.anchor = "power"
+        assert.are.equal(frame.Health, client.ns.TextRegion(frame), "no power bar")
+    end)
+
     it("takes the box's smaller side, and a fallback for a size the client hides", function()
         local client = NewClient()
         local backdrop = client.frames.player.Portrait.backdrop

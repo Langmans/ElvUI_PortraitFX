@@ -57,6 +57,8 @@ AceGUIWidgetLSMlists = nil
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
 ---@field Spot fun(frame: AddonFrame): table, string, number
+---@field TextRegion fun(frame: AddonFrame): Region
+---@field anchors string[]
 ---@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret): string?, (string|AddonSecret)?, number?, number?, number?, number?
 ---@field ShowText fun(holder: AddonHolder, event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret)
 ---@field HideText fun(holder: AddonHolder)
@@ -103,7 +105,8 @@ AceGUIWidgetLSMlists = nil
 ---@class AddonTextSettings
 ---@field font string a LibSharedMedia font name
 ---@field size number the text's height as a part of the spot's
----@field point FramePoint where on the spot the text sits
+---@field anchor "auto"|"portrait"|"health"|"power"|"frame" what the text is anchored to
+---@field point FramePoint where on it the text sits
 ---@field x number
 ---@field y number
 ---@field outline string

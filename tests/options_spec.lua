@@ -59,6 +59,10 @@ describe("the options page", function()
             client:Holder("target").text.points.BOTTOM
         )
         assert.is_string(text.args.point.values.TOPLEFT)
+        assert.are.equal("auto", text.get(info("text", "anchor")))
+        text.set(info("text", "anchor"), "frame")
+        assert.are.equal(client.frames.target, client:Holder("target").text.points.BOTTOM[1])
+        assert.are.same({ "auto", "portrait", "health", "power", "frame" }, text.args.anchor.sorting)
     end)
 
     it("sets the colours, and puts them back", function()

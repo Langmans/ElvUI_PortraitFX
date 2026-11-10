@@ -25,7 +25,8 @@ ElvUI's options (`/ec`) → Plugins → **Portrait FX**:
 - **Frames:** per frame, combat text and the icon on or off; the strata and level of both (the
   text is always above the icon); how much goes to OAP Debug and _DebugLog.
 - **Combat text:** font, size (as a part of the portrait's height), outline, critical size, time
-  shown, position (a point on the portrait or health bar, and an X/Y offset), which kinds of event, short numbers (in ElvUI's number style), colour by school, the
+  shown, position (anchored to the portrait, the health or power bar or the whole frame, or
+  automatic; a point on it and an X/Y offset), which kinds of event, short numbers (in ElvUI's number style), colour by school, the
   colours.
 - **Crowd control:** countdown numbers, interrupts, defensives.
 

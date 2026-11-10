@@ -94,7 +94,7 @@ function ns.Layout(holder)
     holder.size = size
     local text = ns.db().text
     holder.text:ClearAllPoints()
-    holder.text:SetPoint(text.point, region, text.point, text.x, text.y)
+    holder.text:SetPoint(text.point, ns.TextRegion(holder.frame), text.point, text.x, text.y)
     ns.LayoutCC(holder, region, point, size)
     ns.Stack(holder)
 end

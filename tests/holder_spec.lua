@@ -75,6 +75,9 @@ describe("the parts on a frame", function()
         assert.are.same({ TOP = { client.frames.player.Portrait.backdrop, "TOP", 6, -4 } }, holder.text.points)
         client:Style("player", "overlay")
         assert.are.same({ TOP = { client.frames.player.Health, "TOP", 6, -4 } }, holder.text.points)
+        text.anchor = "portrait"
+        client.ns.ApplyAll()
+        assert.are.same({ TOP = { client.frames.player.Portrait, "TOP", 6, -4 } }, holder.text.points)
     end)
 
     it("are made for a frame ElvUI builds later", function()

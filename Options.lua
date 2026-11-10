@@ -17,6 +17,11 @@ local POINTS = {}
 for _, point in ipairs(POINT_ORDER) do
     POINTS[point] = L["POINT_" .. point]
 end
+-- What the text can be anchored to (Spot.lua), with their names.
+local ANCHORS = {}
+for _, anchor in ipairs(ns.anchors) do
+    ANCHORS[anchor] = L["ANCHOR_" .. anchor]
+end
 -- The client's frame stratas, bottom to top.
 local STRATAS = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 
@@ -194,9 +199,17 @@ local function TextTab()
         outline = { type = "select", order = 3, name = L.OUTLINE, values = OUTLINES },
         crit = Range(4, L.CRIT, L.CRIT_DESC, 1, 3, 0.05),
         hold = Range(5, L.HOLD, L.HOLD_DESC, 0.2, 3, 0.1),
-        point = {
+        anchor = {
             type = "select",
             order = 6,
+            name = L.ANCHOR,
+            desc = L.ANCHOR_DESC,
+            values = ANCHORS,
+            sorting = ns.anchors,
+        },
+        point = {
+            type = "select",
+            order = 6.5,
             name = L.POINT,
             desc = L.POINT_DESC,
             values = POINTS,
