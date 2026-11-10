@@ -1,6 +1,7 @@
 -- The plugin's page in ElvUI's options, among the plugins in its side bar: test mode at the top,
--- then three tabs. Frames: per frame the text and the icon. Combat text: its look, the kinds of
--- event, the colours. Crowd control: countdown numbers and the player's interrupts.
+-- then three tabs. Frames: a page per kind of frame (the text and the icon on or off, where each
+-- sits), the strata and level, the debug addons. Combat text: its look, the kinds of event, the
+-- colours. Crowd control: countdown numbers, interrupts, defensives.
 
 local addon, ns = ... ---@type string, AddonNamespace
 local E, P = ElvUI[1], ElvUI[4]
@@ -11,13 +12,13 @@ local TITLE = "|cffff4040%s|r"
 local OUTLINES = { [""] = L.OUTLINE_NONE, OUTLINE = L.OUTLINE_OUTLINE, THICKOUTLINE = L.OUTLINE_THICK }
 local KINDS = { "damage", "heals", "misses", "energize" }
 local COLORS = { "physical", "spell", "heal", "power", "miss" }
--- The points the text can sit on, in the order of a 3x3 grid.
+-- The points the text and the icon can sit on, in the order of a 3x3 grid.
 local POINT_ORDER = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
 local POINTS = {}
 for _, point in ipairs(POINT_ORDER) do
     POINTS[point] = L["POINT_" .. point]
 end
--- What the text can be anchored to (Spot.lua), with their names.
+-- What the text and the icon can be anchored to (Spot.lua), with their names.
 local ANCHORS = {}
 for _, anchor in ipairs(ns.anchors) do
     ANCHORS[anchor] = L["ANCHOR_" .. anchor]
@@ -115,28 +116,99 @@ local function DebugBox()
     }
 end
 
+---Where the text or the icon sits on a kind of frame, as a box on its page: what it is anchored to,
+---the point on it and the offset. The icon on automatic picks its point itself.
+---@param key string the kind of frame
+---@param place "textPlace"|"ccPlace"
+---@param order number
+---@param name string
+---@return table
+local function PlaceBox(key, place, order, name)
+    local point = {
+        type = "select",
+        order = 2,
+        name = L.POINT,
+        desc = L.POINT_DESC,
+        values = POINTS,
+        sorting = POINT_ORDER,
+    }
+    if place == "ccPlace" then
+        ---@return boolean
+        point.disabled = function()
+            return ns.db().units[key].ccPlace.anchor == "auto"
+        end
+    end
+    return {
+        type = "group",
+        inline = true,
+        order = order,
+        name = name,
+        ---@param info string[]
+        ---@return string|number
+        get = function(info)
+            return ns.db().units[key][place][info[#info]] --[[@as string|number]]
+        end,
+        ---@param info string[]
+        ---@param value string|number
+        set = function(info, value)
+            ns.db().units[key][place][info[#info]] = value
+            ns.ApplyAll()
+        end,
+        args = {
+            anchor = {
+                type = "select",
+                order = 1,
+                name = L.ANCHOR,
+                desc = L.ANCHOR_DESC,
+                values = ANCHORS,
+                sorting = ns.anchors,
+            },
+            point = point,
+            x = Range(3, L.X, nil, -200, 200, 1),
+            y = Range(4, L.Y, nil, -200, 200, 1),
+        },
+    }
+end
+
+---A kind of frame's page: the text and the icon on or off, and where each sits.
+---@param key string
+---@param order number
+---@return table
+local function UnitPage(key, order)
+    return {
+        type = "group",
+        order = order,
+        name = L[key],
+        args = {
+            show = {
+                type = "group",
+                inline = true,
+                order = 1,
+                name = L.SHOW,
+                ---@param info string[]
+                ---@return boolean
+                get = function(info)
+                    return ns.db().units[key][info[#info]] --[[@as boolean]]
+                end,
+                ---@param info string[]
+                ---@param value boolean
+                set = function(info, value)
+                    ns.db().units[key][info[#info]] = value
+                    ns.ApplyAll()
+                end,
+                args = { text = Toggle(1, L.SHOW_TEXT), cc = Toggle(2, L.SHOW_CC) },
+            },
+            textPlace = PlaceBox(key, "textPlace", 2, L.TEXT_PLACE),
+            ccPlace = PlaceBox(key, "ccPlace", 3, L.CC_PLACE),
+        },
+    }
+end
+
 ---@return table
 local function UnitsTab()
     local args = {}
     for order, key in ipairs(ns.unitOrder) do
-        args[key] = {
-            type = "group",
-            inline = true,
-            order = order,
-            name = L[key],
-            ---@param info string[]
-            ---@return boolean
-            get = function(info)
-                return ns.db().units[info[#info - 1]][info[#info]] --[[@as boolean]]
-            end,
-            ---@param info string[]
-            ---@param value boolean
-            set = function(info, value)
-                ns.db().units[info[#info - 1]][info[#info]] = value
-                ns.ApplyAll()
-            end,
-            args = { text = Toggle(1, L.SHOW_TEXT), cc = Toggle(2, L.SHOW_CC) },
-        }
+        args[key] = UnitPage(key, order)
     end
     args.layer = LayerBox()
     args.debug = DebugBox()
@@ -199,24 +271,6 @@ local function TextTab()
         outline = { type = "select", order = 3, name = L.OUTLINE, values = OUTLINES },
         crit = Range(4, L.CRIT, L.CRIT_DESC, 1, 3, 0.05),
         hold = Range(5, L.HOLD, L.HOLD_DESC, 0.2, 3, 0.1),
-        anchor = {
-            type = "select",
-            order = 6,
-            name = L.ANCHOR,
-            desc = L.ANCHOR_DESC,
-            values = ANCHORS,
-            sorting = ns.anchors,
-        },
-        point = {
-            type = "select",
-            order = 6.5,
-            name = L.POINT,
-            desc = L.POINT_DESC,
-            values = POINTS,
-            sorting = POINT_ORDER,
-        },
-        x = Range(7, L.X, nil, -200, 200, 1),
-        y = Range(8, L.Y, nil, -200, 200, 1),
         kinds = { type = "header", order = 10, name = L.KINDS },
         short = Toggle(20, L.SHORT, L.SHORT_DESC),
         schools = Toggle(21, L.SCHOOLS, L.SCHOOLS_DESC),

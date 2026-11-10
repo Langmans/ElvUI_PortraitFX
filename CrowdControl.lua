@@ -98,15 +98,17 @@ function ns.BuildCC(holder)
     holder.loss.cooldown:SetScript("OnCooldownDone", LossDone)
 end
 
----Puts a frame's icon on its spot.
+---Puts a frame's icon on its region, at a point and an offset.
 ---@param holder AddonHolder
 ---@param region Region
 ---@param point FramePoint
 ---@param size number
-function ns.LayoutCC(holder, region, point, size)
+---@param x number
+---@param y number
+function ns.LayoutCC(holder, region, point, size, x, y)
     local cc = holder.cc
     cc:ClearAllPoints()
-    cc:SetPoint(point, region, point, 0, 0)
+    cc:SetPoint(point, region, point, x, y)
     cc:SetSize(size, size)
 end
 

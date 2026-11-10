@@ -28,7 +28,7 @@ end
 ---The region to put the text and the icon on, the icon's point on it, and the icon's size (also
 ---what the text's size is measured against).
 ---@param frame AddonFrame
----@return table region, string point, number size
+---@return Region region, FramePoint point, number size
 function ns.Spot(frame)
     if frame.USE_PORTRAIT and not frame.USE_PORTRAIT_OVERLAY then
         local box = frame.Portrait.backdrop
@@ -37,18 +37,40 @@ function ns.Spot(frame)
         return box, "CENTER", Usable(math.min(width, height))
     end
     local health = frame.Health
-    return health, SIDES[frame.ORIENTATION] or "LEFT", Usable(health:GetHeight())
+    return health,
+        (SIDES[frame.ORIENTATION] or "LEFT"), --[[@as FramePoint]]
+        Usable(health:GetHeight())
 end
 
----The region the text is anchored to: the part of the frame set (the portrait itself, also as an
----overlay; a bar; the whole frame), or the spot when set to auto or when the frame lacks or hides
----that part.
+---The part of the frame an anchor names (the portrait itself, also as an overlay; a bar; the whole
+---frame), or nil for auto or a part the frame lacks or hides.
 ---@param frame AddonFrame
----@return Region
-function ns.TextRegion(frame)
-    local anchor = ns.db().text.anchor
+---@param anchor string
+---@return Region?
+local function Part(frame, anchor)
     if anchor == "frame" then return frame end
     local part = PARTS[anchor] and frame[PARTS[anchor]] --[[@as Region?]]
     if part and part:IsShown() then return part end
-    return (ns.Spot(frame))
+    return nil
+end
+
+---The region the text is anchored to: the part set, else the spot.
+---@param frame AddonFrame
+---@param place AddonPlace
+---@return Region
+function ns.TextRegion(frame, place)
+    return Part(frame, place.anchor) or (ns.Spot(frame))
+end
+
+---The icon's region, point and size: the part set, at the point set, as big as the part's smaller
+---side; else the spot.
+---@param frame AddonFrame
+---@param place AddonPlace
+---@return Region region, FramePoint point, number size
+function ns.IconSpot(frame, place)
+    local part = Part(frame, place.anchor)
+    if not part then return ns.Spot(frame) end
+    local width, height = part:GetWidth(), part:GetHeight()
+    if ns.IsSecret(width) or ns.IsSecret(height) then return part, place.point, ns.FALLBACK_SIZE end
+    return part, place.point, Usable(math.min(width, height))
 end

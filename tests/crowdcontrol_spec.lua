@@ -74,6 +74,20 @@ describe("the icon's aura slots", function()
         assert.are.equal(40, cc:GetHeight())
     end)
 
+    it("move to the part, point and offset set for the kind of frame", function()
+        local client = NewClient()
+        local cc = client:db().units.target.ccPlace
+        cc.anchor, cc.point, cc.x, cc.y = "frame", "TOPRIGHT", -2, 3
+        client.frames.target:SetSize(240, 50)
+        client.ns.ApplyAll()
+        local icon = client:Holder("target").cc
+        assert.are.same({ TOPRIGHT = { client.frames.target, "TOPRIGHT", -2, 3 } }, icon.points)
+        assert.are.equal(50, icon:GetWidth())
+        cc.anchor = "auto"
+        client.ns.ApplyAll()
+        assert.are.same({ CENTER = { client.frames.target.Portrait.backdrop, "CENTER", -2, 3 } }, icon.points)
+    end)
+
     it("are switched per unit and the countdown numbers for all", function()
         local client = NewClient()
         client:db().units.target.cc = false

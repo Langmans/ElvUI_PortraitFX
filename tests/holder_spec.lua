@@ -66,9 +66,9 @@ describe("the parts on a frame", function()
         assert.are.equal("target", client:Holder("target").listening)
     end)
 
-    it("put the text at the point and offset set, on the spot", function()
+    it("put the text at the point and offset set for its kind of frame, on the spot", function()
         local client = NewClient()
-        local text = client:db().text
+        local text = client:db().units.player.textPlace
         text.point, text.x, text.y = "TOP", 6, -4
         client.ns.ApplyAll()
         local holder = client:Holder("player")
@@ -78,6 +78,11 @@ describe("the parts on a frame", function()
         text.anchor = "portrait"
         client.ns.ApplyAll()
         assert.are.same({ TOP = { client.frames.player.Portrait, "TOP", 6, -4 } }, holder.text.points)
+        assert.are.same(
+            { CENTER = { client.frames.target.Portrait.backdrop, "CENTER", 0, 0 } },
+            client:Holder("target").text.points,
+            "another kind of frame keeps its own"
+        )
     end)
 
     it("are made for a frame ElvUI builds later", function()

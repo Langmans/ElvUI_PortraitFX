@@ -34,27 +34,41 @@ describe("the spot", function()
 
     it("of the text can be another part of the frame, as set", function()
         local client = NewClient():Style("target", "overlay")
-        local frame, text = client.frames.target, client:db().text
+        local frame, place = client.frames.target, client:db().units.target.textPlace
         local spot = client.ns.Spot(frame)
-        assert.are.equal(spot, client.ns.TextRegion(frame), "auto: the spot")
-        text.anchor = "portrait"
-        assert.are.equal(frame.Portrait, client.ns.TextRegion(frame), "the portrait itself, also as overlay")
-        text.anchor = "health"
-        assert.are.equal(frame.Health, client.ns.TextRegion(frame))
-        text.anchor = "power"
-        assert.are.equal(frame.Power, client.ns.TextRegion(frame))
-        text.anchor = "frame"
-        assert.are.equal(frame, client.ns.TextRegion(frame))
+        assert.are.equal(spot, client.ns.TextRegion(frame, place), "auto: the spot")
+        place.anchor = "portrait"
+        assert.are.equal(frame.Portrait, client.ns.TextRegion(frame, place), "the portrait itself, also as overlay")
+        place.anchor = "health"
+        assert.are.equal(frame.Health, client.ns.TextRegion(frame, place))
+        place.anchor = "power"
+        assert.are.equal(frame.Power, client.ns.TextRegion(frame, place))
+        place.anchor = "frame"
+        assert.are.equal(frame, client.ns.TextRegion(frame, place))
     end)
 
     it("of the text falls back to the spot for a part the frame lacks or hides", function()
         local client = NewClient():Style("focus", "none")
-        local frame, text = client.frames.focus, client:db().text
-        text.anchor = "portrait"
-        assert.are.equal(frame.Health, client.ns.TextRegion(frame), "no portrait shown")
+        local frame, place = client.frames.focus, client:db().units.focus.textPlace
+        place.anchor = "portrait"
+        assert.are.equal(frame.Health, client.ns.TextRegion(frame, place), "no portrait shown")
         frame.Power = nil
-        text.anchor = "power"
-        assert.are.equal(frame.Health, client.ns.TextRegion(frame), "no power bar")
+        place.anchor = "power"
+        assert.are.equal(frame.Health, client.ns.TextRegion(frame, place), "no power bar")
+    end)
+
+    it("of the icon is the spot when automatic, else the part set, as big as its smaller side", function()
+        local client = NewClient()
+        local frame, place = client.frames.player, client:db().units.player.ccPlace
+        assert.are.same({ client.ns.Spot(frame) }, { client.ns.IconSpot(frame, place) })
+        place.anchor, place.point = "health", "RIGHT"
+        local region, point, size = client.ns.IconSpot(frame, place)
+        assert.are.equal(frame.Health, region)
+        assert.are.equal("RIGHT", point)
+        assert.are.equal(40, size)
+        place.anchor = "power"
+        frame.Power:Hide()
+        assert.are.same({ client.ns.Spot(frame) }, { client.ns.IconSpot(frame, place) }, "a hidden part: automatic")
     end)
 
     it("takes the box's smaller side, and a fallback for a size the client hides", function()

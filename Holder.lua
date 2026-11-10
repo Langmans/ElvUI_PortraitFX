@@ -86,16 +86,19 @@ local function Build(frame)
     return holder
 end
 
----Puts the text and the icon on the frame's spot (Spot.lua), at the strata and level set.
+---Puts the text and the icon where set for the kind of frame (Spot.lua), at the strata and level
+---set.
 ---@param holder AddonHolder
 function ns.Layout(holder)
     ns.Listen(holder)
-    local region, point, size = ns.Spot(holder.frame)
-    holder.size = size
-    local text = ns.db().text
+    local frame, unit = holder.frame, ns.db().units[holder.key]
+    holder.size = select(3, ns.Spot(frame))
+    local text = unit.textPlace
     holder.text:ClearAllPoints()
-    holder.text:SetPoint(text.point, ns.TextRegion(holder.frame), text.point, text.x, text.y)
-    ns.LayoutCC(holder, region, point, size)
+    holder.text:SetPoint(text.point, ns.TextRegion(frame, text), text.point, text.x, text.y)
+    local icon = unit.ccPlace
+    local region, point, size = ns.IconSpot(frame, icon)
+    ns.LayoutCC(holder, region, point, size, icon.x, icon.y)
     ns.Stack(holder)
 end
 

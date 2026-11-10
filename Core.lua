@@ -25,23 +25,24 @@ for _, key in ipairs(ns.unitOrder) do
     ns.units[key] = true
 end
 
+-- Per kind of frame: the text and the icon on or off, and where each sits: what it is anchored to
+-- ("auto": the spot, Spot.lua), the point on it and how far off.
+local units = {}
+for _, key in ipairs(ns.unitOrder) do
+    units[key] = {
+        text = true,
+        cc = true,
+        textPlace = { anchor = "auto", point = "CENTER", x = 0, y = 0 },
+        ccPlace = { anchor = "auto", point = "CENTER", x = 0, y = 0 },
+    }
+end
+
 P[addon] = {
-    units = {
-        player = { text = true, cc = true },
-        target = { text = true, cc = true },
-        focus = { text = true, cc = true },
-        pet = { text = true, cc = true },
-        party = { text = true, cc = true },
-    },
+    units = units,
     text = {
         font = "PT Sans Narrow",
         -- The text's height as a part of the spot's (Spot.lua), so party portraits get smaller text.
         size = 0.5,
-        -- What the text is anchored to ("auto": the spot, Spot.lua), where on it, and how far off.
-        anchor = "auto",
-        point = "CENTER",
-        x = 0,
-        y = 0,
         outline = "OUTLINE",
         -- Blizzard's own portrait text: a critical hit half again as big, held 0.7 seconds.
         crit = 1.5,

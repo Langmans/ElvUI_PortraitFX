@@ -56,15 +56,16 @@ AceGUIWidgetLSMlists = nil
 ---@field TEST_INTERVAL number
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
----@field Spot fun(frame: AddonFrame): table, string, number
----@field TextRegion fun(frame: AddonFrame): Region
+---@field Spot fun(frame: AddonFrame): Region, FramePoint, number
+---@field TextRegion fun(frame: AddonFrame, place: AddonPlace): Region
+---@field IconSpot fun(frame: AddonFrame, place: AddonPlace): Region, FramePoint, number
 ---@field anchors string[]
 ---@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret): string?, (string|AddonSecret)?, number?, number?, number?, number?
 ---@field ShowText fun(holder: AddonHolder, event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret)
 ---@field HideText fun(holder: AddonHolder)
 ---@field IconFrame fun(holder: AddonHolder): AddonIconFrame
 ---@field BuildCC fun(holder: AddonHolder)
----@field LayoutCC fun(holder: AddonHolder, region: Region, point: FramePoint, size: number)
+---@field LayoutCC fun(holder: AddonHolder, region: Region, point: FramePoint, size: number, x: number, y: number)
 ---@field RefreshCC fun(holder: AddonHolder)
 ---@field ApplyCC fun(holder: AddonHolder)
 ---@field UpdateLoss fun(holder: AddonHolder)
@@ -86,9 +87,18 @@ AceGUIWidgetLSMlists = nil
 ---@field InsertOptions fun()
 ---@field DevOptions? fun(): table
 
+---Where the text or the icon sits on a kind of frame.
+---@class AddonPlace
+---@field anchor "auto"|"portrait"|"health"|"power"|"frame" what it is anchored to
+---@field point FramePoint where on that it sits (the icon on auto picks its own)
+---@field x number
+---@field y number
+
 ---@class AddonUnitSettings
 ---@field text boolean
 ---@field cc boolean
+---@field textPlace AddonPlace
+---@field ccPlace AddonPlace
 
 ---@class AddonColor
 ---@field r number
@@ -105,10 +115,6 @@ AceGUIWidgetLSMlists = nil
 ---@class AddonTextSettings
 ---@field font string a LibSharedMedia font name
 ---@field size number the text's height as a part of the spot's
----@field anchor "auto"|"portrait"|"health"|"power"|"frame" what the text is anchored to
----@field point FramePoint where on it the text sits
----@field x number
----@field y number
 ---@field outline string
 ---@field crit number
 ---@field hold number seconds
