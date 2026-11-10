@@ -11,6 +11,12 @@ local TITLE = "|cffff4040%s|r"
 local OUTLINES = { [""] = L.OUTLINE_NONE, OUTLINE = L.OUTLINE_OUTLINE, THICKOUTLINE = L.OUTLINE_THICK }
 local KINDS = { "damage", "heals", "misses", "energize" }
 local COLORS = { "physical", "spell", "heal", "power", "miss" }
+-- The points the text can sit on, in the order of a 3x3 grid.
+local POINT_ORDER = { "TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT" }
+local POINTS = {}
+for _, point in ipairs(POINT_ORDER) do
+    POINTS[point] = L["POINT_" .. point]
+end
 -- The client's frame stratas, bottom to top.
 local STRATAS = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 
@@ -188,6 +194,16 @@ local function TextTab()
         outline = { type = "select", order = 3, name = L.OUTLINE, values = OUTLINES },
         crit = Range(4, L.CRIT, L.CRIT_DESC, 1, 3, 0.05),
         hold = Range(5, L.HOLD, L.HOLD_DESC, 0.2, 3, 0.1),
+        point = {
+            type = "select",
+            order = 6,
+            name = L.POINT,
+            desc = L.POINT_DESC,
+            values = POINTS,
+            sorting = POINT_ORDER,
+        },
+        x = Range(7, L.X, nil, -200, 200, 1),
+        y = Range(8, L.Y, nil, -200, 200, 1),
         kinds = { type = "header", order = 10, name = L.KINDS },
         short = Toggle(20, L.SHORT, L.SHORT_DESC),
         schools = Toggle(21, L.SCHOOLS, L.SCHOOLS_DESC),
@@ -210,6 +226,7 @@ local function TextTab()
         ---@param value string|number|boolean
         set = function(info, value)
             ns.db().text[info[#info]] = value
+            ns.ApplyAll()
         end,
         args = args,
     }

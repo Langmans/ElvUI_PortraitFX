@@ -48,6 +48,19 @@ describe("the options page", function()
         assert.are.equal("LSM30_Font", text.args.font.dialogControl)
     end)
 
+    it("sets the text's point and offset, applied at once", function()
+        local client = NewClient()
+        local text = client:LoadOptions().args.text
+        assert.are.equal("CENTER", text.get(info("text", "point")))
+        text.set(info("text", "point"), "BOTTOM")
+        text.set(info("text", "y"), 10)
+        assert.are.same(
+            { client.frames.target.Portrait.backdrop, "BOTTOM", 0, 10 },
+            client:Holder("target").text.points.BOTTOM
+        )
+        assert.is_string(text.args.point.values.TOPLEFT)
+    end)
+
     it("sets the colours, and puts them back", function()
         local client = NewClient()
         local colors = client:LoadOptions().args.text.args.colors

@@ -92,8 +92,9 @@ function ns.Layout(holder)
     ns.Listen(holder)
     local region, point, size = ns.Spot(holder.frame)
     holder.size = size
+    local text = ns.db().text
     holder.text:ClearAllPoints()
-    holder.text:SetPoint("CENTER", region, "CENTER", 0, 0)
+    holder.text:SetPoint(text.point, region, text.point, text.x, text.y)
     ns.LayoutCC(holder, region, point, size)
     ns.Stack(holder)
 end

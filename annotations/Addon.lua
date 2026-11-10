@@ -103,6 +103,9 @@ AceGUIWidgetLSMlists = nil
 ---@class AddonTextSettings
 ---@field font string a LibSharedMedia font name
 ---@field size number the text's height as a part of the spot's
+---@field point FramePoint where on the spot the text sits
+---@field x number
+---@field y number
 ---@field outline string
 ---@field crit number
 ---@field hold number seconds

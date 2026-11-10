@@ -66,6 +66,17 @@ describe("the parts on a frame", function()
         assert.are.equal("target", client:Holder("target").listening)
     end)
 
+    it("put the text at the point and offset set, on the spot", function()
+        local client = NewClient()
+        local text = client:db().text
+        text.point, text.x, text.y = "TOP", 6, -4
+        client.ns.ApplyAll()
+        local holder = client:Holder("player")
+        assert.are.same({ TOP = { client.frames.player.Portrait.backdrop, "TOP", 6, -4 } }, holder.text.points)
+        client:Style("player", "overlay")
+        assert.are.same({ TOP = { client.frames.player.Health, "TOP", 6, -4 } }, holder.text.points)
+    end)
+
     it("are made for a frame ElvUI builds later", function()
         local client = NewClient()
         client:BuildFrame("party3", "party")
