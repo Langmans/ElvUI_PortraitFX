@@ -69,6 +69,7 @@ AceGUIWidgetLSMlists = nil
 ---@field Layout fun(holder: AddonHolder)
 ---@field Stack fun(holder: AddonHolder)
 ---@field Listen fun(holder: AddonHolder)
+---@field Unit fun(holder: AddonHolder): string?
 ---@field L table<string, string> the client's strings (Locales\)
 ---@field debugLevels string[]
 ---@field ConnectDebug fun()
@@ -147,7 +148,7 @@ AceGUIWidgetLSMlists = nil
 
 ---One of ElvUI's unit frames, the fields the plugin reads.
 ---@class AddonFrame: Button
----@field unit string
+---@field __unit string? oUF's unit for the frame (ElvUI's frames have no frame.unit)
 ---@field unitframeType string
 ---@field isChild boolean?
 ---@field ORIENTATION "LEFT"|"RIGHT"|"MIDDLE"

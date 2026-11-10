@@ -87,7 +87,7 @@ describe("the icon's aura slots", function()
 
     it("follow the frame's unit, and refresh when the target, focus, party or pet change", function()
         local client = NewClient()
-        client.frames.party2.unit = "party3"
+        client.frames.party2.__unit = "party3"
         client:Fire("GROUP_ROSTER_UPDATE")
         assert.are.equal("party3", Container(client, "party2"):GetUnit())
         local before = Container(client, "target").updates

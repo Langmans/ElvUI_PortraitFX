@@ -68,6 +68,14 @@ P[addon] = {
     debug = "metrics",
 }
 
+---A frame's unit, as ElvUI's oUF keeps it (__unit: ElvUI's frames have no frame.unit). Nil while
+---the frame has none yet, as when ElvUI configures its portrait during the spawn.
+---@param holder AddonHolder
+---@return string?
+function ns.Unit(holder)
+    return holder.frame.__unit
+end
+
 ---The plugin's settings in the current ElvUI profile.
 ---@return AddonSettings
 function ns.db()
@@ -119,6 +127,14 @@ function M:UNIT_PET(_, owner)
     if owner == "player" then Changed("pet") end
 end
 
+---The world loaded: every frame takes its unit again, which oUF may have set after the spawn.
+function M:PLAYER_ENTERING_WORLD()
+    for _, holder in ipairs(ns.holderList) do
+        ns.Listen(holder)
+        ns.RefreshCC(holder)
+    end
+end
+
 function M:PLAYER_REGEN_DISABLED()
     if ns.testing then ns.SetTesting(false) end
 end
@@ -136,6 +152,7 @@ function M:Initialize()
         self:RegisterEvent(event, "UnitChanged")
     end
     self:RegisterEvent("UNIT_PET")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
 end
 

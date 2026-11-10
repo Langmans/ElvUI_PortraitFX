@@ -16,6 +16,7 @@ local SLOTS = {
 }
 local DEFENSIVES = { "external", "big" }
 local ACTIVE = Constants.LossOfControlConsts.LOSS_OF_CONTROL_ACTIVE_INDEX
+local NO_UNIT = "none"
 
 ---An icon texture filling its frame, cropped as ElvUI crops its icons.
 ---@param parent Frame
@@ -72,7 +73,6 @@ local function Container(holder)
             end,
         })
     end
-    container:SetUnit(holder.frame.unit)
     return container
 end
 
@@ -116,7 +116,8 @@ function ns.RefreshCC(holder)
     ns.UpdateLoss(holder)
     local container = holder.container
     if not container or not container:IsEnabled() then return end
-    local unit = holder.frame.unit
+    -- "none", the client's token for no unit, while the frame has none: SetUnit takes only a string.
+    local unit = ns.Unit(holder) or NO_UNIT
     if container:GetUnit() ~= unit then container:SetUnit(unit) end
     container:UpdateAllAuras()
     if ns.Logging("debug") then ns.Log("debug", "cc: {1} shows {2}", holder.key, unit) end
@@ -173,11 +174,13 @@ end
 ---as the game's duration object; without one there is no countdown to show, so no icon either.
 ---@param holder AddonHolder
 function ns.UpdateLoss(holder)
-    local loss, unit = holder.loss, holder.frame.unit
+    local loss, unit = holder.loss, ns.Unit(holder)
     local data, index = nil, 0
-    if ns.db().units[holder.key].cc then
+    if unit and ns.db().units[holder.key].cc then
         data, index = Entry(unit)
     end
+    -- An entry means a unit.
+    ---@cast unit string
     local start, duration = data and data.startTime, data and data.duration
     local hidden = ns.IsSecret(start) or ns.IsSecret(duration)
     local object = data and hidden and C_LossOfControl.GetActiveLossOfControlDuration(unit, index)

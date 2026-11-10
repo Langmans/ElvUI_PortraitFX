@@ -54,12 +54,17 @@ local function OnEvent(holder, event, unit, what, flags, amount, school)
     ns.ShowText(holder, what, flags, amount, school)
 end
 
----Registers the unit events for the frame's unit, again when it shows another.
+---Registers the unit events for the frame's unit, again when it shows another; none while it has
+---no unit.
 ---@param holder AddonHolder
 function ns.Listen(holder)
-    local unit = holder.frame.unit
+    local unit = ns.Unit(holder)
     if holder.listening == unit then return end
     holder.listening = unit
+    if not unit then
+        holder:UnregisterAllEvents()
+        return
+    end
     for _, event in ipairs(UNIT_EVENTS) do
         holder:RegisterUnitEvent(event, unit)
     end

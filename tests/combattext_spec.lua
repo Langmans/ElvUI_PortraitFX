@@ -154,7 +154,7 @@ describe("combat text", function()
 
     it("follows a party frame to its new unit", function()
         local client = NewClient()
-        client.frames.party2.unit = "party3"
+        client.frames.party2.__unit = "party3"
         client:Fire("GROUP_ROSTER_UPDATE")
         client:Combat("party3", "WOUND", "", 10, 1)
         assert.is_true(Text(client, "party2"):IsShown())

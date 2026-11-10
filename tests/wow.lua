@@ -185,6 +185,7 @@ function NewClient(opts)
     Constants = { LossOfControlConsts = { LOSS_OF_CONTROL_ACTIVE_INDEX = 1 } }
     C_LossOfControl = {
         GetActiveLossOfControlDataCountByUnit = function(unit)
+            assert(type(unit) == "string", "Usage: GetActiveLossOfControlDataCountByUnit(unitToken)")
             return client.lossCount[unit] or #(client.loss[unit] or {})
         end,
         GetActiveLossOfControlDataByUnit = function(unit, index)
@@ -275,8 +276,12 @@ function NewClient(opts)
         end
         ---As the client: a unit event registered again replaces the unit it was registered for.
         function r:RegisterUnitEvent(event, unit)
+            assert(type(unit) == "string", "Usage: RegisterUnitEvent(event, unit)")
             self.unitEvents = self.unitEvents or {}
             self.unitEvents[event] = unit
+        end
+        function r:UnregisterAllEvents()
+            self.unitEvents = {}
         end
         function r:SetScript(script, fn)
             self.scripts[script] = fn
@@ -367,6 +372,7 @@ function NewClient(opts)
             return self.enabled
         end
         function c:SetUnit(unit)
+            assert(type(unit) == "string", "unitToken must be a string")
             self.unit = unit
         end
         function c:GetUnit()
@@ -510,10 +516,12 @@ function NewClient(opts)
     ---@param unit string the frame's unit, also its key in client.frames
     ---@param kind string? ElvUI's unitframeType, when not the unit ("party" for party1)
     ---@param style "side"|"overlay"|"none"|nil where the portrait is, "side" by default
+    ---@param noUnit boolean? oUF has not given the frame its unit yet, as a party button's
     ---@return table
-    function client:BuildFrame(unit, kind, style)
+    function client:BuildFrame(unit, kind, style, noUnit)
         local frame = Region("Button")
-        frame.unitframeType, frame.unit, frame.ORIENTATION = kind or unit, unit, "LEFT"
+        -- ElvUI's oUF keeps the unit in __unit (Private.UpdateUnits); there is no frame.unit.
+        frame.unitframeType, frame.__unit, frame.ORIENTATION = kind or unit, not noUnit and unit or nil, "LEFT"
         frame.Health = Region("StatusBar", frame)
         frame.Health:SetSize(200, 40)
         local portrait = Region("PlayerModel", frame)
