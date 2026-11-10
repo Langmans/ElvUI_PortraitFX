@@ -44,7 +44,10 @@ function ns.SetTesting(on)
     turn = 0
     local units = ns.db().units
     for _, holder in ipairs(ns.holderList) do
-        holder.preview = holder.preview or ns.IconFrame(holder, ns.PREVIEW_LEVEL)
+        if not holder.preview then
+            holder.preview = ns.IconFrame(holder)
+            ns.Stack(holder)
+        end
         local preview = holder.preview
         preview.icon:SetTexture(PREVIEW_ICON)
         preview.cooldown:SetCooldown(GetTime(), ns.PREVIEW_DURATION)

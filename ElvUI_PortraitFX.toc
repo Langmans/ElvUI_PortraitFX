@@ -4,11 +4,13 @@
 ## Author: Langmans
 ## Version: @project-version@
 ## RequiredDeps: ElvUI
+## OptionalDeps: OAPDebug, _DebugLog
 ## X-License: MIT
 ## IconTexture: Interface\Icons\Spell_Holy_Silence
 
 Locales\enUS.lua
 Core.lua
+Debug.lua
 Spot.lua
 CombatText.lua
 CrowdControl.lua

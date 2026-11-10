@@ -53,8 +53,6 @@ AceGUIWidgetLSMlists = nil
 ---@field samples table[] test mode's events: event, flags, amount, school
 ---@field testing boolean?
 ---@field FALLBACK_SIZE number
----@field LOSS_LEVEL number
----@field PREVIEW_LEVEL number
 ---@field TEST_INTERVAL number
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
@@ -62,13 +60,23 @@ AceGUIWidgetLSMlists = nil
 ---@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret): string?, (string|AddonSecret)?, number?, number?, number?, number?
 ---@field ShowText fun(holder: AddonHolder, event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret)
 ---@field HideText fun(holder: AddonHolder)
----@field IconFrame fun(holder: AddonHolder, level: number): AddonIconFrame
+---@field IconFrame fun(holder: AddonHolder): AddonIconFrame
 ---@field BuildCC fun(holder: AddonHolder)
----@field LayoutCC fun(holder: AddonHolder, region: table, point: string, size: number)
+---@field LayoutCC fun(holder: AddonHolder, region: Region, point: FramePoint, size: number)
 ---@field RefreshCC fun(holder: AddonHolder)
 ---@field ApplyCC fun(holder: AddonHolder)
----@field UpdateLoss fun()
+---@field UpdateLoss fun(holder: AddonHolder)
 ---@field Layout fun(holder: AddonHolder)
+---@field Stack fun(holder: AddonHolder)
+---@field Listen fun(holder: AddonHolder)
+---@field L table<string, string> the client's strings (Locales\)
+---@field debugLevels string[]
+---@field ConnectDebug fun()
+---@field HasDebugAddon fun(): boolean
+---@field Logging fun(kind: "error"|"warn"|"info"|"debug"): boolean
+---@field Shown fun(value: string|number|boolean|AddonSecret|nil): string|number|boolean
+---@field Log fun(kind: "error"|"warn"|"info"|"debug", msg: string, ...: string|number|boolean)
+---@field Count fun(name: string)
 ---@field Attach fun(frame: AddonFrame)
 ---@field ApplyAll fun()
 ---@field SetTesting fun(on: boolean)
@@ -108,12 +116,29 @@ AceGUIWidgetLSMlists = nil
 ---@class AddonCCSettings
 ---@field numbers boolean
 ---@field interrupts boolean
+---@field defensives boolean
+
+---@class AddonLayerSettings
+---@field strata FrameStrata|"" "": the frame's own
+---@field level number above ElvUI's raised element parent
 
 ---The plugin's settings in ElvUI's profile.
 ---@class AddonSettings
 ---@field units table<string, AddonUnitSettings>
 ---@field text AddonTextSettings
 ---@field cc AddonCCSettings
+---@field layer AddonLayerSettings
+---@field debug string how much goes to the debug addons: "errors", "normal", "metrics", "detailed"
+
+---OAP Debug's global table, as far as the plugin calls it (Debug.lua).
+---@class OAPDebugApi
+---@field Register fun(name: string, opts: { title: string?, folder: string?, icon: (string|number)? }): string
+---@field Log fun(source: string, msg: string, level: "error"|"warn"|"info"|"debug", ...: string|number|boolean)
+---@field Count fun(source: string, name: string, n: number?)
+
+---_DebugLog's global table (DLAPI), as far as the plugin calls it (Debug.lua).
+---@class DebugLogApi
+---@field DebugLog fun(tab: string, fmt: string, ...: string) adds string.format(fmt, ...) to the tab
 
 ---Development screenshots' saved data (Dev.lua), in ElvUI's global data.
 ---@class AddonDevData
@@ -139,6 +164,7 @@ AceGUIWidgetLSMlists = nil
 ---@field SetUnit fun(self: AddonAuraContainer, unit: string)
 ---@field GetUnit fun(self: AddonAuraContainer): string?
 ---@field SetEnabled fun(self: AddonAuraContainer, enabled: boolean)
+---@field SetAuraSlotEnabled fun(self: AddonAuraContainer, key: string, enabled: boolean)
 ---@field IsEnabled fun(self: AddonAuraContainer): boolean
 ---@field UpdateAllAuras fun(self: AddonAuraContainer)
 
@@ -150,7 +176,11 @@ AceGUIWidgetLSMlists = nil
 ---An icon of the plugin's own: a texture and a countdown.
 ---@class AddonIconFrame: Frame
 ---@field icon Texture
----@field cooldown Cooldown
+---@field cooldown AddonCooldown
+
+---A countdown of the plugin's own; the loss of control's knows its frame's parts.
+---@class AddonCooldown: Cooldown
+---@field holder AddonHolder?
 
 ---The plugin's parts on a frame.
 ---@class AddonHolder: Frame
@@ -158,9 +188,11 @@ AceGUIWidgetLSMlists = nil
 ---@field key string the frame's unitframeType
 ---@field size number the spot's size (Spot.lua)
 ---@field started number when the text last showed
+---@field listening string? the unit its unit events are registered for
 ---@field text FontString
+---@field textFrame Frame the text's frame, above everything of the icon
 ---@field cc Frame the icon's frame
 ---@field cooldowns Cooldown[]
 ---@field container AddonAuraContainer? Blizzard's custom aura container, nil on a client without one
----@field loss AddonIconFrame? the player's loss of control
+---@field loss AddonIconFrame the loss of control for the frame's unit
 ---@field preview AddonIconFrame? test mode's sample icon

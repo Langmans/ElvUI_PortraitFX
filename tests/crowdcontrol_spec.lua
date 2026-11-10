@@ -1,7 +1,8 @@
--- The crowd control icon over the portrait (CrowdControl.lua). Blizzard's custom aura container
--- picks the aura and draws it, so it keeps working in combat while aura details are hidden from
--- addons: one aura slot per frame, filtered HARMFUL|CROWD_CONTROL. On the player the game's loss of
--- control data goes on top, which also knows interrupts, silences and roots.
+-- The icon over the portrait (CrowdControl.lua). Blizzard's custom aura container picks the auras
+-- and draws them, so they keep working in combat while aura details are hidden from addons: per
+-- frame one container with three aura slots, crowd control on top of the big defensives (Divine
+-- Shield, Ice Block) on top of the external ones (Blessing of Protection). Above those the game's
+-- loss of control for the frame's unit, which also knows interrupts, silences and roots.
 
 ---The aura container on a unit's frame.
 local function Container(client, unit)
@@ -23,16 +24,21 @@ local function Loss(fields)
     return entry
 end
 
-describe("the crowd control icon", function()
-    it("is one crowd control aura slot over the portrait, for the frame's unit", function()
+describe("the icon's aura slots", function()
+    it("are crowd control, big and external defensives, for the frame's unit", function()
         local client = NewClient()
         local container = Container(client, "target")
-        local slot = container.slots.cc
-        assert.are.equal("HARMFUL|CROWD_CONTROL", slot.filter)
+        assert.are.equal("HARMFUL|CROWD_CONTROL", container.slots.cc.filter)
+        assert.are.equal("HELPFUL|BIG_DEFENSIVE", container.slots.big.filter)
+        assert.are.equal("HELPFUL|EXTERNAL_DEFENSIVE", container.slots.external.filter)
         assert.are.equal("target", container:GetUnit())
         assert.is_true(container:IsEnabled())
         assert.is_false(container.preview, "no Edit Mode placeholder auras")
-        local button = slot.button
+    end)
+
+    it("are each the game's button, filling the icon, with a texture and a countdown", function()
+        local client = NewClient()
+        local button = Container(client, "target").slots.cc.button
         assert.are.same({ ALL = { client:Holder("target").cc } }, button.points)
         assert.are.equal("Texture", button.icon.kind)
         assert.are.same(client.E.TexCoords, button.icon.texCoord)
@@ -41,7 +47,24 @@ describe("the crowd control icon", function()
         assert.is_false(button.mouse, "no tooltip in the way of clicks on the frame")
     end)
 
-    it("sits on the spot: the portrait's box, or the health bar's portrait side", function()
+    it("stack crowd control over the big defensives over the external ones", function()
+        local client = NewClient()
+        local slots = Container(client, "player").slots
+        assert.is_true(slots.cc.button:GetFrameLevel() > slots.big.button:GetFrameLevel())
+        assert.is_true(slots.big.button:GetFrameLevel() > slots.external.button:GetFrameLevel())
+    end)
+
+    it("leave the defensives out when switched off", function()
+        local client = NewClient()
+        client:db().cc.defensives = false
+        client.ns.ApplyAll()
+        local slots = Container(client, "focus").slots
+        assert.is_false(slots.big.enabled)
+        assert.is_false(slots.external.enabled)
+        assert.is_true(slots.cc.enabled)
+    end)
+
+    it("sit on the spot: the portrait's box, or the health bar's portrait side", function()
         local client = NewClient()
         local cc = client:Holder("player").cc
         assert.are.same({ client.frames.player.Portrait.backdrop, "CENTER", 0, 0 }, cc.points.CENTER)
@@ -51,19 +74,7 @@ describe("the crowd control icon", function()
         assert.are.equal(40, cc:GetHeight())
     end)
 
-    it("is above ElvUI's 3D portrait and the frame's texts", function()
-        local client = NewClient()
-        local holder = client:Holder("player")
-        assert.are.equal(client.frames.player.RaisedElementParent, holder.parent)
-        assert.is_true(holder.cc:GetFrameLevel() > client.frames.player.RaisedElementParent:GetFrameLevel())
-    end)
-
-    it("hangs on the frame itself where it has no raised parent", function()
-        local client = NewClient({ noRaised = true })
-        assert.are.equal(client.frames.player, client:Holder("player").parent)
-    end)
-
-    it("is switched per unit and the countdown numbers for all", function()
+    it("are switched per unit and the countdown numbers for all", function()
         local client = NewClient()
         client:db().units.target.cc = false
         client:db().cc.numbers = false
@@ -74,7 +85,7 @@ describe("the crowd control icon", function()
         assert.is_true(client:Holder("player").loss.cooldown.hideNumbers)
     end)
 
-    it("follows the frame's unit, and refreshes when the target, focus, party or pet change", function()
+    it("follow the frame's unit, and refresh when the target, focus, party or pet change", function()
         local client = NewClient()
         client.frames.party2.unit = "party3"
         client:Fire("GROUP_ROSTER_UPDATE")
@@ -88,36 +99,58 @@ describe("the crowd control icon", function()
         before = Container(client, "pet").updates
         client:Fire("UNIT_PET", "player")
         assert.are.equal(before + 1, Container(client, "pet").updates)
+        client:Fire("UNIT_PET", "party1")
+        assert.are.equal(before + 1, Container(client, "pet").updates, "another's pet")
     end)
 
-    it("is left out on a client without the aura container, with the player's loss of control still there", function()
+    it("are left out on a client without the aura container, the loss of control still there", function()
         local client = NewClient({ noAuraContainer = true })
         assert.is_nil(Container(client, "target"))
-        client.loss[1] = Loss()
+        client.loss.player = { Loss() }
         client:Fire("LOSS_OF_CONTROL_ADDED", "player", 1)
         assert.is_true(client:Holder("player").loss:IsShown())
     end)
 end)
 
-describe("the player's loss of control", function()
-    it("shows the game's icon and countdown over the aura slot", function()
+describe("the loss of control", function()
+    it("shows the game's icon and countdown for the frame's unit, over the aura slots", function()
         local client = NewClient()
-        client.loss[1] = Loss()
-        client:Fire("LOSS_OF_CONTROL_ADDED", "player", 1)
-        local loss = client:Holder("player").loss
+        client.loss.target = { Loss() }
+        client:Fire("LOSS_OF_CONTROL_ADDED", "target", 1)
+        local loss = client:Holder("target").loss
         assert.is_true(loss:IsShown())
         assert.are.equal(132298, loss.icon.texture)
         assert.are.same({ 990, 20 }, loss.cooldown.cooldown)
-        assert.is_true(loss:GetFrameLevel() > client:Holder("player").cc:GetFrameLevel())
+        assert.is_true(loss:GetFrameLevel() > Container(client, "target").slots.cc.button:GetFrameLevel())
+        assert.is_false(client:Holder("player").loss:IsShown(), "only on the frame of that unit")
     end)
 
-    it("uses the game's duration object when the times are hidden", function()
+    it("is on every frame: player, target, focus, pet and party", function()
+        local client = NewClient()
+        for _, unit in ipairs({ "player", "target", "focus", "pet", "party1", "party2" }) do
+            client.loss[unit] = { Loss() }
+            client:Fire("LOSS_OF_CONTROL_UPDATE", unit)
+            assert.is_true(client:Holder(unit).loss:IsShown(), unit)
+        end
+    end)
+
+    it("is read again when the frame shows another unit", function()
+        local client = NewClient()
+        client.loss.target = { Loss() }
+        client:Fire("PLAYER_TARGET_CHANGED")
+        assert.is_true(client:Holder("target").loss:IsShown())
+        client.loss.target = nil
+        client:Fire("PLAYER_TARGET_CHANGED")
+        assert.is_false(client:Holder("target").loss:IsShown())
+    end)
+
+    it("uses the game's duration object when the times are hidden, and none without one", function()
         local client = NewClient()
         local duration = {}
-        client.loss[1] = Loss({ startTime = SECRET, duration = SECRET, durationObject = duration })
+        client.loss.player = { Loss({ startTime = SECRET, duration = SECRET, durationObject = duration }) }
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.are.equal(duration, client:Holder("player").loss.cooldown.durationObject)
-        client.loss[1].durationObject = nil
+        client.loss.player[1].durationObject = nil
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.is_false(client:Holder("player").loss:IsShown(), "no countdown to show")
     end)
@@ -125,48 +158,41 @@ describe("the player's loss of control", function()
     it("skips what is not shown, and interrupts when switched off", function()
         local client = NewClient()
         local loss = client:Holder("player").loss
-        client.loss[1] = Loss({ displayType = 0 })
+        client.loss.player = { Loss({ displayType = 0 }) }
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.is_false(loss:IsShown())
-        client.loss[1] = Loss({ locType = "SCHOOL_INTERRUPT", iconTexture = 1 })
-        client.loss[2] = Loss({ iconTexture = 2 })
+        client.loss.player = { Loss({ locType = "SCHOOL_INTERRUPT", iconTexture = 1 }), Loss({ iconTexture = 2 }) }
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.are.equal(1, loss.icon.texture, "the first one the game lists")
         client:db().cc.interrupts = false
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.are.equal(2, loss.icon.texture)
-        client.loss[1] = Loss({ locType = SECRET, iconTexture = 1 })
+        client.loss.player[1] = Loss({ locType = SECRET, iconTexture = 1 })
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.are.equal(2, loss.icon.texture, "a hidden kind might be an interrupt")
     end)
 
-    it("shows a hidden display type, which may be anything", function()
+    it("shows a hidden display type, which may be anything, and the active entry for a hidden count", function()
         local client = NewClient()
-        client.loss[1] = Loss({ displayType = SECRET })
+        client.loss.player = { Loss({ displayType = SECRET }), Loss({ iconTexture = 2 }) }
+        client.lossCount.player = SECRET
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.is_true(client:Holder("player").loss:IsShown())
+        assert.are.equal(132298, client:Holder("player").loss.icon.texture)
     end)
 
-    it("hides when the loss of control ends, or the player's icon is switched off", function()
+    it("hides when it ends, or the frame's icon is switched off", function()
         local client = NewClient()
         local loss = client:Holder("player").loss
-        client.loss[1] = Loss()
+        client.loss.player = { Loss() }
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
-        client.loss[1] = nil
+        client.loss.player = nil
         loss.cooldown:GetScript("OnCooldownDone")(loss.cooldown)
         assert.is_false(loss:IsShown())
         assert.is_nil(loss.cooldown.cooldown)
-        client.loss[1] = Loss()
+        client.loss.player = { Loss() }
         client:db().units.player.cc = false
         client:Fire("LOSS_OF_CONTROL_UPDATE", "player")
         assert.is_false(loss:IsShown())
-    end)
-
-    it("listens only for the player", function()
-        local client = NewClient()
-        client.loss[1] = Loss()
-        client:Fire("LOSS_OF_CONTROL_UPDATE", "target")
-        assert.is_false(client:Holder("player").loss:IsShown())
-        assert.is_nil(client:Holder("target").loss)
     end)
 end)

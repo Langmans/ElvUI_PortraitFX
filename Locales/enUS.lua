@@ -20,6 +20,24 @@ L.party = "Party"
 L.SHOW_TEXT = "Combat text"
 L.SHOW_CC = "Crowd control icon"
 
+-- The Frames tab's box for the strata and level of the text and the icon.
+L.LAYER = "Layer"
+L.STRATA = "Strata"
+L.STRATA_OWN = "The frame's own"
+L.LEVEL = "Level"
+L.LEVEL_DESC = "Frame levels above the unit frame's texts. ElvUI puts its auras 10 above them."
+
+-- The Frames tab's box for the debug addons (OAP Debug, _DebugLog), the setting every OAP addon
+-- has: how much the plugin sends to them.
+L.DEBUG = "OAP Debug"
+L.DEBUG_LEVEL = "Send to OAP Debug"
+L.DEBUG_DESC = "How much goes to OAP Debug's and _DebugLog's window: what the plugin receives and shows. Detailed: every combat event on a frame."
+L.DEBUG_MISSING = "Not installed: nothing is sent."
+L.DEBUG_errors = "Errors only"
+L.DEBUG_normal = "Normal"
+L.DEBUG_metrics = "Normal and metrics"
+L.DEBUG_detailed = "Detailed"
+
 -- The Text tab: its look, the kinds of event, the colours.
 L.TEXT = "Combat text"
 L.FONT = "Font"
@@ -52,8 +70,10 @@ L.RESET = "Default colours"
 
 -- The Crowd control tab.
 L.CC = "Crowd control"
-L.CC_DESC = "The game picks the crowd control aura and draws it, so the icon keeps working in combat while WoW: Forever hides aura details from addons. On the player the game's loss of control data goes on top, which also knows interrupts, silences and roots."
+L.CC_DESC = "The game picks the aura and draws it, so the icon keeps working in combat while WoW: Forever hides aura details from addons. Crowd control goes over a defensive. The game's loss of control goes on top, which also knows interrupts, silences and roots."
 L.NUMBERS = "Countdown numbers"
-L.INTERRUPTS = "Interrupts on the player"
+L.INTERRUPTS = "Interrupts"
+L.DEFENSIVES = "Defensives"
+L.DEFENSIVES_DESC = "Big defensives such as Divine Shield and Ice Block, and external ones such as Blessing of Protection, when no crowd control is on the unit."
 
 -- stylua: ignore end

@@ -23,6 +23,19 @@ describe("the parts on a frame", function()
         assert.are.same({ client.frames.player.Portrait.backdrop, "CENTER", 0, 0 }, holder.text.points.CENTER)
     end)
 
+    it("listen to their own unit's combat and loss of control, as Blizzard's frames do", function()
+        local client = NewClient()
+        local holder = client:Holder("party2")
+        assert.are.same(
+            { UNIT_COMBAT = "party2", LOSS_OF_CONTROL_UPDATE = "party2", LOSS_OF_CONTROL_ADDED = "party2" },
+            holder.unitEvents
+        )
+        client.frames.party2.unit = "party4"
+        client:Fire("GROUP_ROSTER_UPDATE")
+        assert.are.equal("party4", holder.unitEvents.UNIT_COMBAT, "the frame's new unit")
+        assert.is_nil(client.events.UNIT_COMBAT, "not for every unit at once")
+    end)
+
     it("are made for a frame ElvUI builds later", function()
         local client = NewClient()
         client:BuildFrame("party3", "party")

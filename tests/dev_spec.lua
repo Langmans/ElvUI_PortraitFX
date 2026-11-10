@@ -56,15 +56,15 @@ describe("development screenshots", function()
         client:Style("target", "overlay"):Combat("target", "WOUND", "", 10, 1):Advance(3)
         client:Style("focus", "none"):Combat("focus", "WOUND", "", 10, 1):Advance(3)
         client:Combat("player", "WOUND", "", SECRET, 1):Advance(3)
-        client.loss[1] = { displayType = 2, locType = "STUN", iconTexture = 1, startTime = 0, duration = 5 }
-        client:Fire("LOSS_OF_CONTROL_ADDED", "player", 1):Advance(3)
+        client.loss.target = { { displayType = 2, locType = "STUN", iconTexture = 1, startTime = 0, duration = 5 } }
+        client:Fire("LOSS_OF_CONTROL_ADDED", "target", 1):Advance(3)
         client.ns.SetTesting(true)
         client:Advance(3)
         for _, kind in ipairs({
             "combat text: target, overlay",
             "combat text: focus, no portrait",
             "combat text: hidden amount",
-            "loss of control",
+            "loss of control: target",
             "test mode",
         }) do
             assert.is_true(shots[kind], kind)

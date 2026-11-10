@@ -13,6 +13,10 @@
 ---@field noOptions boolean? ElvUI_Options not loaded
 ---@field noRaised boolean? frames without ElvUI's raised element parent
 ---@field noSecretCheck boolean? a client without issecretvalue, which hides nothing
+---@field oapDebug boolean? OAP Debug installed: its calls go to client.debugCalls
+---@field debugLog boolean? _DebugLog installed (DLAPI): its lines go to client.debugCalls too
+---@field debugLevel string? the plugin's debug setting in the profile
+---@field brokenContainer boolean? the aura container is there, but adding a slot errors
 
 -- What the client returns for a value it hides (issecretvalue says so).
 SECRET = setmetatable({}, {
@@ -175,17 +179,19 @@ function NewClient(opts)
         return tostring(n)
     end
 
-    -- The loss of control API: client.loss holds the entries, in the client's order.
+    -- The loss of control API per unit: client.loss[unit] holds a unit's entries, in the client's
+    -- order; client.lossCount[unit], when set, is the count the client gives instead (SECRET).
+    client.lossCount = {}
+    Constants = { LossOfControlConsts = { LOSS_OF_CONTROL_ACTIVE_INDEX = 1 } }
     C_LossOfControl = {
-        GetActiveLossOfControlDataCount = function()
-            return #client.loss
+        GetActiveLossOfControlDataCountByUnit = function(unit)
+            return client.lossCount[unit] or #(client.loss[unit] or {})
         end,
-        GetActiveLossOfControlData = function(index)
-            return client.loss[index]
+        GetActiveLossOfControlDataByUnit = function(unit, index)
+            return (client.loss[unit] or {})[index]
         end,
         GetActiveLossOfControlDuration = function(unit, index)
-            assert(unit == "player", "the player's loss of control")
-            local entry = client.loss[index]
+            local entry = (client.loss[unit] or {})[index]
             return entry and entry.durationObject
         end,
     }
@@ -252,11 +258,25 @@ function NewClient(opts)
         function r:SetFrameLevel(level)
             self.level = level
         end
+        ---A frame's own strata, else its parent's, as the client inherits it.
+        function r:SetFrameStrata(strata)
+            self.strata = strata
+        end
+        function r:GetFrameStrata()
+            return self.strata
+                or (self.parent and self.parent.GetFrameStrata and self.parent:GetFrameStrata())
+                or "MEDIUM"
+        end
         function r:GetFrameLevel()
             return self.level
         end
         function r:EnableMouse(on)
             self.mouse = on
+        end
+        ---As the client: a unit event registered again replaces the unit it was registered for.
+        function r:RegisterUnitEvent(event, unit)
+            self.unitEvents = self.unitEvents or {}
+            self.unitEvents[event] = unit
         end
         function r:SetScript(script, fn)
             self.scripts[script] = fn
@@ -355,7 +375,12 @@ function NewClient(opts)
         function c:UpdateAllAuras()
             self.updates = self.updates + 1
         end
+        function c:SetAuraSlotEnabled(key, on)
+            assert(type(on) == "boolean", "enabled must be a boolean.")
+            self.slots[key].enabled = on
+        end
         function c:AddAuraSlot(key, filter, options)
+            assert(not opts.brokenContainer, "aura slot '" .. key .. "' could not be added")
             assert(not self.slots[key], "one slot per key")
             local button = Region("CustomAuraButton", self)
             function button:SetIcon(texture)
@@ -366,7 +391,7 @@ function NewClient(opts)
                 self.durationCooldown = cooldown
             end
             button:Hide()
-            self.slots[key] = { filter = filter, options = options, button = button }
+            self.slots[key] = { filter = filter, options = options, button = button, enabled = true }
             if options and options.initializeFrame then options.initializeFrame(button) end
             return button
         end
@@ -517,6 +542,33 @@ function NewClient(opts)
 
     ElvUI = { E, {}, {}, P, G }
 
+    -- The debug addons, loaded before the plugin (its OptionalDeps): every call recorded as
+    -- { name, ... } in client.debugCalls.
+    client.debugCalls = {}
+    local function recorder(call)
+        return function(...)
+            client.debugCalls[#client.debugCalls + 1] = { call, ... }
+        end
+    end
+    OAPDebug = opts.oapDebug and { Register = recorder("Register"), Log = recorder("Log"), Count = recorder("Count") }
+        or nil
+    DLAPI = opts.debugLog and { DebugLog = recorder("DebugLog") } or nil
+    ---The debug calls of one kind, without their name.
+    function client:debug(call)
+        local found = {}
+        for _, entry in ipairs(self.debugCalls) do
+            if entry[1] == call then found[#found + 1] = { unpack(entry, 2) } end
+        end
+        return found
+    end
+    ---Whether a debug line's message (OAP Debug's, before its values) contains text.
+    function client:logged(text)
+        for _, entry in ipairs(self:debug("Log")) do
+            if entry[2]:find(text, 1, true) then return true end
+        end
+        return false
+    end
+
     for _, file in ipairs(TOC_FILES) do
         assert(loadstring(AsPackaged(file, opts.dev), "@" .. file))(name, client.ns)
     end
@@ -524,6 +576,7 @@ function NewClient(opts)
     -- Login: ElvUI reads the profile and global data (defaults included), builds its unit frames,
     -- then initialises the plugin's module.
     E.db, E.global = copy(P), copy(G)
+    if opts.debugLevel then E.db[name].debug = opts.debugLevel end
     client:BuildFrame("player")
     client:BuildFrame("target")
     client:BuildFrame("focus")
@@ -542,9 +595,18 @@ function NewClient(opts)
     client.loggedIn = true
 
     ---Fires an event at the module that registered it, as AceEvent does.
+    ---A unit event (its first argument the unit) also goes to each frame that registered it for
+    ---that unit, as the client delivers RegisterUnitEvent's events.
     function client:Fire(event, ...)
         local entry = self.events[event]
         if entry then entry.module[entry.handler](entry.module, event, ...) end
+        local unit = ...
+        for _, region in ipairs(self.regions) do
+            local events = region.unitEvents
+            if events and events[event] == unit and region.scripts.OnEvent then
+                region.scripts.OnEvent(region, event, ...)
+            end
+        end
         return self
     end
     ---A UNIT_COMBAT event: what happened to a unit.

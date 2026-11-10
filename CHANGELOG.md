@@ -9,3 +9,7 @@ First version, for WoW: Forever.
   control on top.
 - The portrait beside the bars, as an overlay, or none: both follow.
 - Test mode, and a page in ElvUI's options.
+- Big and external defensives (Divine Shield, Blessing of Protection) on the icon, under crowd control.
+- Loss of control on every frame, not only the player.
+- The text above the icon; strata and level can be set.
+- Lines for OAP Debug and _DebugLog.

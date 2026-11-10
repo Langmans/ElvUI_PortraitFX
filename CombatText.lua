@@ -129,9 +129,17 @@ end
 ---@param school number|AddonSecret
 function ns.ShowText(holder, event, flags, amount, school)
     local db = ns.db()
-    if not db.units[holder.key].text then return end
+    if not db.units[holder.key].text then
+        ns.Log("debug", "combat: text is off on {1}", holder.key)
+        return
+    end
     local format, value, scale, r, g, b = ns.Feedback(event, flags, amount, school)
-    if not format then return end
+    if not format then
+        if ns.Logging("debug") then
+            ns.Log("debug", "combat: nothing to show for {1} {2}", ns.Shown(event), ns.Shown(flags))
+        end
+        return
+    end
     ---@cast value string
     ---@cast scale number
     ---@cast r number

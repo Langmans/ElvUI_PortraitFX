@@ -11,6 +11,8 @@ local TITLE = "|cffff4040%s|r"
 local OUTLINES = { [""] = L.OUTLINE_NONE, OUTLINE = L.OUTLINE_OUTLINE, THICKOUTLINE = L.OUTLINE_THICK }
 local KINDS = { "damage", "heals", "misses", "energize" }
 local COLORS = { "physical", "spell", "heal", "power", "miss" }
+-- The client's frame stratas, bottom to top.
+local STRATAS = { "BACKGROUND", "LOW", "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP" }
 
 ---@param order number
 ---@param name string
@@ -29,6 +31,77 @@ end
 ---@return table
 local function Range(order, name, desc, min, max, step)
     return { type = "range", order = order, name = name, desc = desc, min = min, max = max, step = step }
+end
+
+---The parts' strata and level, as a box on the Frames tab.
+---@return table
+local function LayerBox()
+    local stratas = { [""] = L.STRATA_OWN }
+    for _, strata in ipairs(STRATAS) do
+        stratas[strata] = strata
+    end
+    local sorting = { "" }
+    for i, strata in ipairs(STRATAS) do
+        sorting[i + 1] = strata
+    end
+    return {
+        type = "group",
+        inline = true,
+        order = 50,
+        name = L.LAYER,
+        ---@param info string[]
+        ---@return string|number
+        get = function(info)
+            return ns.db().layer[info[#info]] --[[@as string|number]]
+        end,
+        ---@param info string[]
+        ---@param value string|number
+        set = function(info, value)
+            ns.db().layer[info[#info]] = value
+            ns.ApplyAll()
+        end,
+        args = {
+            strata = { type = "select", order = 1, name = L.STRATA, values = stratas, sorting = sorting },
+            level = Range(2, L.LEVEL, L.LEVEL_DESC, 0, 100, 1),
+        },
+    }
+end
+
+---How much goes to the debug addons (Debug.lua), as a box on the Frames tab.
+---@return table
+local function DebugBox()
+    local values = {}
+    for _, level in ipairs(ns.debugLevels) do
+        values[level] = L["DEBUG_" .. level]
+    end
+    return {
+        type = "group",
+        inline = true,
+        order = 60,
+        name = L.DEBUG,
+        args = {
+            level = {
+                type = "select",
+                order = 1,
+                name = L.DEBUG_LEVEL,
+                ---@return string
+                desc = function()
+                    return ns.HasDebugAddon() and L.DEBUG_DESC or L.DEBUG_DESC .. " " .. L.DEBUG_MISSING
+                end,
+                values = values,
+                sorting = ns.debugLevels,
+                ---@return string
+                get = function()
+                    return ns.db().debug
+                end,
+                ---@param _ table AceConfig's info
+                ---@param level string
+                set = function(_, level)
+                    ns.db().debug = level
+                end,
+            },
+        },
+    }
 end
 
 ---@return table
@@ -54,6 +127,8 @@ local function UnitsTab()
             args = { text = Toggle(1, L.SHOW_TEXT), cc = Toggle(2, L.SHOW_CC) },
         }
     end
+    args.layer = LayerBox()
+    args.debug = DebugBox()
     args.dev = ns.DevOptions and ns.DevOptions()
     return { type = "group", order = 1, name = L.UNITS, args = args }
 end
@@ -161,6 +236,7 @@ local function CrowdControlTab()
             desc = { type = "description", order = 0, name = L.CC_DESC },
             numbers = Toggle(1, L.NUMBERS),
             interrupts = Toggle(2, L.INTERRUPTS),
+            defensives = Toggle(3, L.DEFENSIVES, L.DEFENSIVES_DESC),
         },
     }
 end

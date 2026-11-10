@@ -1,20 +1,21 @@
--- The crowd control icon over the portrait. Blizzard's custom aura container picks the aura and
--- draws it: one aura slot per frame, filtered HARMFUL|CROWD_CONTROL, the plugin only giving it a
--- texture and a cooldown. So it keeps working in combat while WoW: Forever hides aura details from
--- addons. On the player the game's loss of control data goes on top: it also knows interrupts,
--- silences and roots, which are no aura.
+-- The icon over the portrait. Blizzard's custom aura container picks the auras and draws them: per
+-- frame one container with three aura slots, the plugin only giving each a texture and a
+-- cooldown. So they keep working in combat while WoW: Forever hides aura details from addons.
+-- Above the slots the game's loss of control for the frame's unit (as Blizzard's own nameplates
+-- read it), which also knows interrupts, silences and roots, which are no aura.
 
 local _, ns = ... ---@type string, AddonNamespace
 local E = ElvUI[1]
 
-local FILTER = "HARMFUL|CROWD_CONTROL"
-local SLOT = "cc"
--- Levels above the icon's frame: the player's loss of control, then test mode's sample.
-ns.LOSS_LEVEL, ns.PREVIEW_LEVEL = 5, 10
-
--- The player's parts, for the loss of control; nil until the player's frame is built.
----@type AddonHolder?
-local player
+-- The aura slots, bottom to top: each one's key, filter and level in the container. Filter parts
+-- all have to hold, so each kind of defensive gets a slot of its own.
+local SLOTS = {
+    { key = "external", filter = "HELPFUL|EXTERNAL_DEFENSIVE", level = 1 },
+    { key = "big", filter = "HELPFUL|BIG_DEFENSIVE", level = 2 },
+    { key = "cc", filter = "HARMFUL|CROWD_CONTROL", level = 3 },
+}
+local DEFENSIVES = { "external", "big" }
+local ACTIVE = Constants.LossOfControlConsts.LOSS_OF_CONTROL_ACTIVE_INDEX
 
 ---An icon texture filling its frame, cropped as ElvUI crops its icons.
 ---@param parent Frame
@@ -28,10 +29,10 @@ end
 
 ---A countdown swipe filling its frame, kept to follow the countdown numbers setting.
 ---@param holder AddonHolder
----@param parent table
----@return table
+---@param parent Frame
+---@return AddonCooldown
 local function Cooldown(holder, parent)
-    local cooldown = CreateFrame("Cooldown", nil, parent, "CooldownFrameTemplate")
+    local cooldown = CreateFrame("Cooldown", nil, parent, "CooldownFrameTemplate") --[[@as AddonCooldown]]
     cooldown:SetAllPoints(parent)
     cooldown:SetReverse(true)
     cooldown:SetDrawEdge(false)
@@ -40,59 +41,67 @@ local function Cooldown(holder, parent)
     return cooldown
 end
 
----An icon of the plugin's own above the aura slot: a texture and a countdown, hidden.
+---An icon of the plugin's own above the aura slots: a texture and a countdown, hidden.
 ---@param holder AddonHolder
----@param level number
 ---@return AddonIconFrame
-function ns.IconFrame(holder, level)
+function ns.IconFrame(holder)
     local frame = CreateFrame("Frame", nil, holder.cc) --[[@as AddonIconFrame]]
     frame:SetAllPoints(holder.cc)
-    frame:SetFrameLevel(holder.cc:GetFrameLevel() + level)
     frame.icon = Icon(frame)
     frame.cooldown = Cooldown(holder, frame)
     frame:Hide()
     return frame
 end
 
----The aura container with its one slot, for the frame's unit. Errors on a client without one.
+---The aura container with its slots, for the frame's unit. Errors on a client without one.
 ---@param holder AddonHolder
----@return table
+---@return AddonAuraContainer
 local function Container(holder)
-    local container = CreateFrame("AuraContainer", nil, holder.cc, "CustomAuraContainerTemplate")
+    local container = CreateFrame("AuraContainer", nil, holder.cc, "CustomAuraContainerTemplate") --[[@as AddonAuraContainer]]
     container:SetAllPoints(holder.cc)
     container:SetEditModePreviewEnabled(false)
-    container:AddAuraSlot(SLOT, FILTER, {
-        ---@param button table the game's aura button
-        initializeFrame = function(button)
-            button:SetAllPoints(holder.cc)
-            button:EnableMouse(false)
-            button:SetIcon(Icon(button))
-            button:SetDurationCooldown(Cooldown(holder, button))
-        end,
-    })
+    for _, slot in ipairs(SLOTS) do
+        container:AddAuraSlot(slot.key, slot.filter, {
+            ---@param button AddonAuraButton the game's aura button
+            initializeFrame = function(button)
+                button:SetAllPoints(holder.cc)
+                button:SetFrameLevel(container:GetFrameLevel() + slot.level)
+                button:EnableMouse(false)
+                button:SetIcon(Icon(button))
+                button:SetDurationCooldown(Cooldown(holder, button))
+            end,
+        })
+    end
     container:SetUnit(holder.frame.unit)
     return container
 end
 
----Makes a frame's icon: the aura slot, and on the player the loss of control.
+---Updates a frame's loss of control when its countdown runs out.
+---@param cooldown AddonCooldown
+local function LossDone(cooldown)
+    ns.UpdateLoss(cooldown.holder --[[@as AddonHolder]])
+end
+
+---Makes a frame's icon: the aura slots and the loss of control.
 ---@param holder AddonHolder
 function ns.BuildCC(holder)
     holder.cooldowns = {}
     holder.cc = CreateFrame("Frame", nil, holder)
-    holder.cc:SetFrameLevel(holder:GetFrameLevel() + 1)
     local ok, container = pcall(Container, holder)
-    holder.container = ok and container or nil
-    if holder.key == "player" then
-        holder.loss = ns.IconFrame(holder, ns.LOSS_LEVEL)
-        holder.loss.cooldown:SetScript("OnCooldownDone", ns.UpdateLoss)
-        player = holder
+    if ok then
+        holder.container = container
+    else
+        ns.Log("error", "cc: no aura container on {1}: {2}", holder.key, tostring(container))
     end
+    holder.loss = ns.IconFrame(holder)
+    holder.loss.cooldown.holder = holder
+    holder.loss.cooldown:SetScript("OnCooldownDone", LossDone)
 end
 
 ---Puts a frame's icon on its spot.
 ---@param holder AddonHolder
----@param region table
----@param point string
+---@param region Region
+---@param point FramePoint
 ---@param size number
 function ns.LayoutCC(holder, region, point, size)
     local cc = holder.cc
@@ -101,23 +110,31 @@ function ns.LayoutCC(holder, region, point, size)
     cc:SetSize(size, size)
 end
 
----The aura slot shows the frame's unit, as it is now.
+---The aura slots and the loss of control show the frame's unit, as it is now.
 ---@param holder AddonHolder
 function ns.RefreshCC(holder)
+    ns.UpdateLoss(holder)
     local container = holder.container
     if not container or not container:IsEnabled() then return end
     local unit = holder.frame.unit
     if container:GetUnit() ~= unit then container:SetUnit(unit) end
     container:UpdateAllAuras()
+    if ns.Logging("debug") then ns.Log("debug", "cc: {1} shows {2}", holder.key, unit) end
 end
 
----A frame's icon after a settings change: on or off, countdown numbers.
+---A frame's icon after a settings change: on or off, the defensives, countdown numbers.
 ---@param holder AddonHolder
 function ns.ApplyCC(holder)
     local db = ns.db()
     local on = db.units[holder.key].cc
     holder.cc:SetShown(on)
-    if holder.container then holder.container:SetEnabled(on) end
+    local container = holder.container
+    if container then
+        container:SetEnabled(on)
+        for _, key in ipairs(DEFENSIVES) do
+            container:SetAuraSlotEnabled(key, db.cc.defensives)
+        end
+    end
     for _, cooldown in ipairs(holder.cooldowns) do
         cooldown:SetHideCountdownNumbers(not db.cc.numbers)
     end
@@ -138,31 +155,32 @@ local function Wanted(data)
     return not ns.IsSecret(kind) and kind ~= "SCHOOL_INTERRUPT"
 end
 
----The first entry the icon shows, in the game's order, and its index.
+---A unit's first entry the icon shows, in the game's order, and its index.
+---@param unit string
 ---@return LossOfControlData? data, number index
-local function Entry()
-    local count = C_LossOfControl.GetActiveLossOfControlDataCount()
-    -- A hidden count cannot be looped over; the game's first entry is the one in force.
-    if ns.IsSecret(count) then count = 1 end
+local function Entry(unit)
+    local count = C_LossOfControl.GetActiveLossOfControlDataCountByUnit(unit)
+    -- A hidden count cannot be looped over: the game's active entry is the one in force.
+    if ns.IsSecret(count) then count = ACTIVE end
     for index = 1, count do
-        local data = C_LossOfControl.GetActiveLossOfControlData(index)
+        local data = C_LossOfControl.GetActiveLossOfControlDataByUnit(unit, index)
         if not ns.IsSecret(data) and data and Wanted(data) then return data, index end
     end
     return nil, 0
 end
 
----The player's loss of control icon, as the game has it now. Hidden times come as the game's
----duration object; without one there is no countdown to show, so no icon either.
-function ns.UpdateLoss()
-    if not player then return end
-    local loss = player.loss --[[@as AddonIconFrame]]
+---A frame's loss of control icon, as the game has it now for the frame's unit. Hidden times come
+---as the game's duration object; without one there is no countdown to show, so no icon either.
+---@param holder AddonHolder
+function ns.UpdateLoss(holder)
+    local loss, unit = holder.loss, holder.frame.unit
     local data, index = nil, 0
-    if ns.db().units.player.cc then
-        data, index = Entry()
+    if ns.db().units[holder.key].cc then
+        data, index = Entry(unit)
     end
     local start, duration = data and data.startTime, data and data.duration
     local hidden = ns.IsSecret(start) or ns.IsSecret(duration)
-    local object = data and hidden and C_LossOfControl.GetActiveLossOfControlDuration("player", index)
+    local object = data and hidden and C_LossOfControl.GetActiveLossOfControlDuration(unit, index)
     if not data or hidden and not object then
         loss.cooldown:Clear()
         loss:Hide()
@@ -175,4 +193,6 @@ function ns.UpdateLoss()
     end
     loss.icon:SetTexture(data.iconTexture)
     loss:Show()
+    ns.Count("loss")
+    if ns.Logging("info") then ns.Log("info", "loss: {1} on {2}", ns.Shown(data.locType), unit) end
 end

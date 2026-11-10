@@ -72,13 +72,11 @@ hooksecurefunc(ns, "ShowText", function(holder, _, __, amount)
     Flush()
 end)
 
-hooksecurefunc(ns, "UpdateLoss", function()
-    for _, holder in ipairs(ns.holderList) do
-        if holder.loss and holder.loss:IsShown() then
-            Notice("loss of control")
-            Flush()
-        end
-    end
+---@param holder AddonHolder
+hooksecurefunc(ns, "UpdateLoss", function(holder)
+    if not holder.loss:IsShown() then return end
+    Notice("loss of control: " .. holder.key)
+    Flush()
 end)
 
 ---@param on boolean

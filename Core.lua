@@ -7,6 +7,7 @@ local E, P = ElvUI[1], ElvUI[4]
 local UF = E:GetModule("UnitFrames")
 
 ns.NAME = addon
+ns.L = LibStub("AceLocale-3.0"):GetLocale(addon)
 
 ---Whether the client hides a value (secret values: WoW: Forever in combat). Such a value may not be
 ---tested or compared, only passed on. A client without the check hides nothing.
@@ -58,7 +59,13 @@ P[addon] = {
     cc = {
         numbers = true,
         interrupts = true,
+        defensives = true,
     },
+    -- The parts' strata ("": the frame's own) and level above ElvUI's raised element parent, which
+    -- has the frame's texts; ElvUI puts its auras 10 above it.
+    layer = { strata = "", level = 5 },
+    -- How much goes to the debug addons (Debug.lua).
+    debug = "metrics",
 }
 
 ---The plugin's settings in the current ElvUI profile.
@@ -89,24 +96,12 @@ function M:Attach(_, frame)
     ns.Attach(frame)
 end
 
----Something happened to a unit: its frames show it.
----@param _ string the event
----@param unit string
----@param event string|AddonSecret
----@param flags string|AddonSecret
----@param amount number|AddonSecret
----@param school number|AddonSecret
-function M:UNIT_COMBAT(_, unit, event, flags, amount, school)
-    for _, holder in ipairs(ns.holderList) do
-        if holder.frame.unit == unit then ns.ShowText(holder, event, flags, amount, school) end
-    end
-end
-
 ---The frames of a kind show another unit now.
 ---@param key string
 local function Changed(key)
     for _, holder in ipairs(ns.holderList) do
         if holder.key == key then
+            ns.Listen(holder)
             ns.HideText(holder)
             ns.RefreshCC(holder)
         end
@@ -124,29 +119,23 @@ function M:UNIT_PET(_, owner)
     if owner == "player" then Changed("pet") end
 end
 
----@param _ string the event
----@param unit string
-function M:LossOfControl(_, unit)
-    if unit == "player" then ns.UpdateLoss() end
-end
-
 function M:PLAYER_REGEN_DISABLED()
     if ns.testing then ns.SetTesting(false) end
 end
 
 function M:Initialize()
+    ns.ConnectDebug()
     LibStub("LibElvUIPlugin-1.0"):RegisterPlugin(addon, ns.InsertOptions)
     self:SecureHook(UF, "Configure_Portrait", "Attach")
     for _, frame in ipairs(E.oUF.objects) do
         ns.Attach(frame)
     end
-    self:RegisterEvent("UNIT_COMBAT")
+    ns.Log("info", "start: {1} frames taken on", #ns.holderList)
+    -- UNIT_COMBAT and the loss of control each frame registers for its own unit (Holder.lua).
     for event in pairs(CHANGES) do
         self:RegisterEvent(event, "UnitChanged")
     end
     self:RegisterEvent("UNIT_PET")
-    self:RegisterEvent("LOSS_OF_CONTROL_ADDED", "LossOfControl")
-    self:RegisterEvent("LOSS_OF_CONTROL_UPDATE", "LossOfControl")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
 end
 
