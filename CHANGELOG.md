@@ -1,0 +1,11 @@
+# Changelog
+
+## Unreleased
+
+First version, for WoW: Forever.
+
+- Combat text on the portraits of ElvUI's player, target, focus, pet and party frames.
+- A crowd control icon over the portrait, from Blizzard's aura container; the player's loss of
+  control on top.
+- The portrait beside the bars, as an overlay, or none: both follow.
+- Test mode, and a page in ElvUI's options.

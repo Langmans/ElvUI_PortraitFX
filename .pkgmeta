@@ -1,0 +1,8 @@
+package-as: ElvUI_PortraitFX
+
+ignore:
+  - annotations
+  - coverage
+  - tests
+  - elvui_portraitfx-dev-1.rockspec
+  - stylua.toml

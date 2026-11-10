@@ -1,0 +1,18 @@
+## Interface: 16001
+## Title: |cff1784d1ElvUI|r |cffff4040Portrait FX|r
+## Notes: Combat text and a crowd control icon on ElvUI's unit frame portraits: player, target, focus, pet and party.
+## Author: Langmans
+## Version: @project-version@
+## RequiredDeps: ElvUI
+## X-License: MIT
+## IconTexture: Interface\Icons\Spell_Holy_Silence
+
+Locales\enUS.lua
+Core.lua
+Spot.lua
+CombatText.lua
+CrowdControl.lua
+Holder.lua
+Test.lua
+Dev.lua
+Options.lua
