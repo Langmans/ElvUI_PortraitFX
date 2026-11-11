@@ -1,6 +1,6 @@
 -- Combat text on the portrait: what UNIT_COMBAT says happened to the frame's unit, faded in, held
 -- and faded out with the timings of Blizzard's own portrait text (CombatFeedback.lua), in its words
--- (CombatFeedbackText) and sizes. Blizzard's functions themselves cannot be borrowed: they compare
+-- (CombatFeedbackText) and sizes, but a partial block marked with an icon instead of a word. Blizzard's functions themselves cannot be borrowed: they compare
 -- the event's values, which an addon may not do with values WoW: Forever hides. Here a hidden amount
 -- only goes to the game's number formatters, and the flags decide what it means.
 
@@ -22,6 +22,10 @@ ns.schoolColors = {
     [D.MaskArcane] = { 1, 0.5, 1 },
 }
 
+-- A partial block: the number and a small shield (the pet bar's Defensive icon), cropped as ElvUI
+-- crops icons and as high as the text. Blizzard's "%s (Blocked)" is too wide for a portrait.
+ns.BLOCK_ICON = "|TInterface\\Icons\\Ability_Defend:0:0:0:0:64:64:5:59:5:59|t"
+local BLOCKED = "%s " .. ns.BLOCK_ICON
 -- Blizzard's words for what is shown as a word, by event or flag (FrameXML's CombatFeedback.lua).
 ---@type table<string, string>
 local WORDS = CombatFeedbackText
@@ -84,7 +88,7 @@ function ns.Feedback(event, flags, amount, school)
         elseif flags == "GLANCING" then
             scale = GLANCING
         end
-        local format = flags == "BLOCK_REDUCED" and COMBAT_TEXT_BLOCK_REDUCED or "%s"
+        local format = flags == "BLOCK_REDUCED" and text.blockIcon and BLOCKED or "%s"
         return format, Amount(amount, text), scale, DamageColor(school, text)
     elseif event == "HEAL" or event == "ENERGIZE" then
         local heal = event == "HEAL"

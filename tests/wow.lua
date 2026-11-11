@@ -138,7 +138,6 @@ function NewClient(opts)
     -- have them.
     MISS, DODGE, PARRY, BLOCK, IMMUNE, ABSORB, RESIST = "Miss", "Dodge", "Parry", "Block", "Immune", "Absorb", "Resist"
     EVADE, DEFLECT, REFLECT, INTERRUPT = "Evade", "Deflect", "Reflect", "Interrupt"
-    COMBAT_TEXT_BLOCK_REDUCED = "%s (Blocked)"
     COMBATFEEDBACK_FADEINTIME, COMBATFEEDBACK_HOLDTIME, COMBATFEEDBACK_FADEOUTTIME = 0.2, 0.7, 0.3
     CombatFeedbackText = {
         INTERRUPT = INTERRUPT,

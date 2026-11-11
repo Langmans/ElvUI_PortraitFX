@@ -73,9 +73,22 @@ describe("combat text", function()
         end
     end)
 
-    it("marks damage partly blocked", function()
+    it("marks damage partly blocked with a small shield, or not at all, never with a word", function()
         local client = NewClient():Combat("player", "WOUND", "BLOCK_REDUCED", 120, 1)
-        assert.are.equal("120 (Blocked)", Text(client, "player"):GetText())
+        assert.are.equal("120 " .. client.ns.BLOCK_ICON, Text(client, "player"):GetText())
+        assert.is_truthy(client.ns.BLOCK_ICON:find("^|TInterface\\Icons\\Ability_Defend:"))
+        client:Combat("player", "WOUND", "BLOCK_REDUCED", SECRET, 1)
+        assert.are.equal("<secret> " .. client.ns.BLOCK_ICON, Text(client, "player"):GetText())
+        client:db().text.blockIcon = false
+        client:Combat("player", "WOUND", "BLOCK_REDUCED", 120, 1)
+        assert.are.equal("120", Text(client, "player"):GetText())
+    end)
+
+    it("shows damage partly absorbed or resisted as the number alone", function()
+        local client = NewClient():Combat("player", "WOUND", "ABSORB", 80, 1)
+        assert.are.equal("80", Text(client, "player"):GetText())
+        client:Combat("player", "WOUND", "RESIST", 40, 32)
+        assert.are.equal("40", Text(client, "player"):GetText())
     end)
 
     it("shortens big numbers in ElvUI's number style when asked", function()

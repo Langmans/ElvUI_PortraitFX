@@ -53,6 +53,7 @@ AceGUIWidgetLSMlists = nil
 ---@field samples table[] test mode's events: event, flags, amount, school
 ---@field testing boolean?
 ---@field FALLBACK_SIZE number
+---@field BLOCK_ICON string the texture escape after a partly blocked number
 ---@field TEST_INTERVAL number
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
@@ -124,6 +125,7 @@ AceGUIWidgetLSMlists = nil
 ---@field energize boolean
 ---@field short boolean
 ---@field schools boolean
+---@field blockIcon boolean a small shield after a partly blocked number
 ---@field colors AddonTextColors
 
 ---@class AddonCCSettings

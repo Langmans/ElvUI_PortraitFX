@@ -53,6 +53,7 @@ P[addon] = {
         energize = false,
         short = false,
         schools = true,
+        blockIcon = true,
         -- Blizzard's own portrait text colours.
         colors = {
             physical = { r = 1, g = 1, b = 1 },
