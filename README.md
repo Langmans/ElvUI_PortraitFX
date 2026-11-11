@@ -27,9 +27,8 @@ ElvUI's options (`/ec`) → Plugins → **Portrait FX**:
   whole frame, or automatic; a point on it and an X/Y offset. Below them the strata and level of
   both (the text is always above the icon) and how much goes to OAP Debug and _DebugLog.
 - **Combat text:** font, size (as a part of the portrait's height), outline, critical size, time
-  shown, icons instead of words (your own shield for a block, Power Word: Shield for an absorb,
-  Evasion for a dodge, and so on; a partial block or absorb is the number and the icon), which
-  kinds of event, short numbers (in ElvUI's number style), colour by school, the
+  shown, small icons instead of words for a block, absorb, dodge, parry, miss and immunity (a
+  partial block or absorb is the number and the icon), which kinds of event, short numbers (in ElvUI's number style), colour by school, the
   colours.
 - **Crowd control:** countdown numbers, interrupts, defensives.
 
@@ -95,6 +94,14 @@ With OAP Debug (`/oapd`) or _DebugLog installed the plugin sends lines there; Fr
 sets how much. Normal: each frame it takes on, an aura container it could not make
 (with the game's error), each loss of control shown. Detailed adds every combat event on a frame
 (event, flags, unit, amount or "hidden") and why one showed nothing. Metrics counts both.
+
+### Icons
+
+The icons for a block, absorb, dodge, parry, miss and immunity are the plugin's own, drawn in
+ElvUI's style (a dark outline, a gradient, a highlight, like its Tank and Combat icons). The source
+is `Media/src/<Name>.svg`; `bash tools/icons.sh` (ImageMagick 7 with librsvg) renders each to
+`Media/<Name>.tga`, 64x64, 32-bit with alpha, uncompressed. Neither the sources nor the script are
+packaged. A spec checks every icon the code names has both files.
 
 ### Tests
 

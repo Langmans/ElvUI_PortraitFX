@@ -74,68 +74,72 @@ describe("combat text", function()
         end
     end)
 
-    it("marks a block with the player's own shield, else the Defensive shield", function()
+    it("shows a block, absorb, dodge, parry, miss and immunity as the plugin's own icons", function()
         local client = NewClient()
-        client.offhand = 2129
-        client:Combat("player", "WOUND", "BLOCK_REDUCED", 120, 1)
-        assert.are.equal("120 " .. client.ns.Mark(134955), Text(client, "player"):GetText())
-        client:Combat("player", "WOUND", "BLOCK", 0, 1)
-        assert.are.equal(client.ns.Mark(134955), Text(client, "player"):GetText(), "a full block: the icon alone")
-        client:Combat("target", "BLOCK", "", 0, 1)
-        assert.are.equal(
-            client.ns.Mark(client.ns.DEFEND),
-            Text(client, "target"):GetText(),
-            "another unit's shield is unknown"
-        )
-        client.offhand = 7298
-        client:Combat("player", "WOUND", "BLOCK_REDUCED", SECRET, 1)
-        assert.are.equal(
-            "<secret> " .. client.ns.Mark(client.ns.DEFEND),
-            Text(client, "player"):GetText(),
-            "no shield equipped"
-        )
-        assert.is_truthy(client.ns.Mark(client.ns.DEFEND):find("^|TInterface\\Icons\\Ability_Defend:"))
-    end)
-
-    it("marks an absorb with Power Word: Shield's icon", function()
-        local client = NewClient():Combat("player", "WOUND", "ABSORB", 80, 1)
-        assert.are.equal("80 " .. client.ns.Mark(135940), Text(client, "player"):GetText(), "partly absorbed")
-        client:Combat("player", "WOUND", "ABSORB", 0, 1)
-        assert.are.equal(client.ns.Mark(135940), Text(client, "player"):GetText(), "absorbed in full")
+        local text, marks = Text(client, "player"), client.ns.marks
+        for _, case in ipairs({
+            { "WOUND", "BLOCK", "BLOCK" },
+            { "BLOCK", "", "BLOCK" },
+            { "WOUND", "ABSORB", "ABSORB" },
+            { "DODGE", "", "DODGE" },
+            { "PARRY", "", "PARRY" },
+            { "WOUND", "", "MISS" },
+            { "MISS", "", "MISS" },
+            { "IMMUNE", "", "IMMUNE" },
+        }) do
+            client:Combat("player", case[1], case[2], 0, 1)
+            assert.are.equal(marks[case[3]], text:GetText(), case[1] .. " " .. case[2])
+        end
+        assert.are.equal("|TInterface\\AddOns\\" .. ADDON_NAME .. "\\Media\\Dodge:0|t", marks.DODGE)
         client:Combat("player", "WOUND", "ABSORB", SECRET, 1)
-        assert.are.equal(client.ns.Mark(135940), Text(client, "player"):GetText(), "a hidden amount: the icon alone")
-        client:Combat("player", "WOUND", "RESIST", 40, 32)
-        assert.are.equal("40", Text(client, "player"):GetText(), "a resist keeps its plain number")
+        assert.are.equal(marks.ABSORB, text:GetText(), "a hidden amount: the icon alone")
     end)
 
-    it("shows a dodge, parry, immunity and interrupt as their spells' icons, a miss still as a word", function()
+    it("has each icon as a .tga in Media, built from its .svg in Media/src", function()
+        local client = NewClient()
+        for kind, mark in pairs(client.ns.marks) do
+            local file = mark:match("\\Media\\(%w+):")
+            for _, path in ipairs({ "Media/" .. file .. ".tga", "Media/src/" .. file .. ".svg" }) do
+                local handle = io.open(path, "rb")
+                assert.is_truthy(handle, kind .. ": " .. path)
+                if handle then handle:close() end
+            end
+        end
+    end)
+
+    it("shows a partial block or absorb as the number and the icon, a partial resist as the number", function()
+        local client = NewClient()
+        local text, marks = Text(client, "player"), client.ns.marks
+        client:Combat("player", "WOUND", "BLOCK_REDUCED", 120, 1)
+        assert.are.equal("120 " .. marks.BLOCK, text:GetText())
+        client:Combat("player", "WOUND", "BLOCK_REDUCED", SECRET, 1)
+        assert.are.equal("<secret> " .. marks.BLOCK, text:GetText())
+        client:Combat("player", "WOUND", "ABSORB", 80, 1)
+        assert.are.equal("80 " .. marks.ABSORB, text:GetText())
+        client:Combat("player", "WOUND", "RESIST", 40, 32)
+        assert.are.equal("40", text:GetText())
+    end)
+
+    it("keeps the words without an icon of their own: resist, evade, deflect, reflect, interrupt", function()
         local client = NewClient()
         local text = Text(client, "player")
-        for event, icon in pairs({ DODGE = 136205, PARRY = 132269, IMMUNE = 135896, INTERRUPT = 132219 }) do
-            client:Combat("player", event, "", 0, 1)
-            assert.are.equal(client.ns.Mark(icon), text:GetText(), event)
-        end
-        client:Combat("player", "REFLECT", "", 0, 1)
-        assert.are.equal("Reflect", text:GetText(), "a spell the client has no icon for: the word")
-        client:Combat("player", "WOUND", "", 0, 1)
-        assert.are.equal("Miss", text:GetText())
         client:Combat("player", "WOUND", "RESIST", 0, 32)
         assert.are.equal("Resist", text:GetText())
+        for event, word in pairs({ EVADE = "Evade", DEFLECT = "Deflect", REFLECT = "Reflect", INTERRUPT = "Interrupt" }) do
+            client:Combat("player", event, "", 0, 1)
+            assert.are.equal(word, text:GetText(), event)
+        end
     end)
 
-    it("uses the words and plain numbers when the icons are off, or the spell's icon is missing", function()
+    it("uses the words and plain numbers when the icons are off", function()
         local client = NewClient()
         client:db().text.icons = false
         client:Combat("player", "WOUND", "BLOCK_REDUCED", 120, 1)
         assert.are.equal("120", Text(client, "player"):GetText())
         client:Combat("player", "WOUND", "ABSORB", 0, 1)
         assert.are.equal("Absorb", Text(client, "player"):GetText())
-        client = NewClient()
-        client.noSpellIcons = true
-        client:Combat("player", "WOUND", "ABSORB", 0, 1)
-        assert.are.equal("Absorb", Text(client, "player"):GetText())
-        client:Combat("player", "WOUND", "ABSORB", 80, 1)
-        assert.are.equal("80", Text(client, "player"):GetText())
+        client:Combat("player", "DODGE", "", 0, 1)
+        assert.are.equal("Dodge", Text(client, "player"):GetText())
     end)
 
     it("shortens big numbers in ElvUI's number style when asked", function()
@@ -153,7 +157,7 @@ describe("combat text", function()
         client:Combat("player", "HEAL", "", SECRET, 2)
         assert.are.equal("<secret>", Text(client, "player"):GetText())
         client:Combat("player", "WOUND", "ABSORB", SECRET, 1)
-        assert.are.equal(client.ns.Mark(135940), Text(client, "player"):GetText())
+        assert.are.equal(client.ns.marks.ABSORB, Text(client, "player"):GetText())
     end)
 
     it("works on a client that hides nothing and has no check for it", function()

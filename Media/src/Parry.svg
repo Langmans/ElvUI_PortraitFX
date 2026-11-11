@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Parry: two crossed swords, silver blades and gold hilts. -->
+  <defs>
+    <linearGradient id="silver" gradientUnits="userSpaceOnUse" x1="0" y1="6" x2="0" y2="50">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#8d9cab"/>
+    </linearGradient>
+    <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="0" y1="36" x2="0" y2="60">
+      <stop offset="0" stop-color="#fff0a0"/>
+      <stop offset="1" stop-color="#c47f0a"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#0d0d0d" stroke-linecap="round" fill="#0d0d0d">
+    <path d="M21 43 L54 10 M43 43 L10 10" stroke-width="10"/>
+    <path d="M14 36 L28 50 M36 50 L50 36" stroke-width="9"/>
+    <path d="M21 43 L11 53 M43 43 L53 53" stroke-width="8"/>
+    <circle cx="9" cy="55" r="5" stroke-width="3"/>
+    <circle cx="55" cy="55" r="5" stroke-width="3"/>
+  </g>
+  <g stroke-linecap="round">
+    <path d="M21 43 L54 10 M43 43 L10 10" stroke="url(#silver)" stroke-width="5"/>
+    <path d="M14 36 L28 50 M36 50 L50 36" stroke="url(#gold)" stroke-width="4"/>
+    <path d="M21 43 L11 53 M43 43 L53 53" stroke="#7a4a12" stroke-width="3.5"/>
+    <circle cx="9" cy="55" r="4" fill="url(#gold)"/>
+    <circle cx="55" cy="55" r="4" fill="url(#gold)"/>
+  </g>
+</svg>

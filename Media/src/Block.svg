@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Block: a steel heater shield. -->
+  <defs>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef3f7"/>
+      <stop offset="0.5" stop-color="#a9b8c6"/>
+      <stop offset="1" stop-color="#55687c"/>
+    </linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fa2b4"/>
+      <stop offset="1" stop-color="#3e5064"/>
+    </linearGradient>
+  </defs>
+  <path d="M32 4 L56 11 L54 33 C52 46 44 54 32 60 C20 54 12 46 10 33 L8 11 Z"
+        fill="url(#steel)" stroke="#0d0d0d" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M29 9 L35 9 L35 55 C34 56 33 56.5 32 57 C31 56.5 30 56 29 55 Z" fill="url(#band)"/>
+  <path d="M32 9.5 L51.5 15 L50 32.5 C48.5 43 42 49.5 32 54.5 C22 49.5 15.5 43 14 32.5 L12.5 15 Z"
+        fill="none" stroke="#ffffff" stroke-opacity="0.35" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M14 15 L30 10.5 L30 20 C24 21 18 24 14.5 28 Z" fill="#ffffff" fill-opacity="0.35"/>
+</svg>

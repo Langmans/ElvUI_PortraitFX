@@ -1,11 +1,11 @@
 -- Combat text on the portrait: what UNIT_COMBAT says happened to the frame's unit, faded in, held
 -- and faded out with the timings of Blizzard's own portrait text (CombatFeedback.lua), in its words
--- (CombatFeedbackText) and sizes; blocks and absorbs as icons if set. Blizzard's functions
+-- (CombatFeedbackText) and sizes, or as the plugin's own icons. Blizzard's functions
 -- themselves cannot be borrowed: they compare the event's values, which an addon may not do with
 -- values WoW: Forever hides. Here a hidden amount only goes to the game's number formatters, and
 -- the flags decide what it means.
 
-local _, ns = ... ---@type string, AddonNamespace
+local addon, ns = ... ---@type string, AddonNamespace
 local E = ElvUI[1]
 
 local PHYSICAL = Enum.Damageclass.MaskPhysical
@@ -23,63 +23,27 @@ ns.schoolColors = {
     [D.MaskArcane] = { 1, 0.5, 1 },
 }
 
--- Icons instead of words, if set, as the words are too wide for a portrait: a block as the player's
--- own shield (else the pet bar's Defensive shield, as another unit's is unknown), the rest as a
--- spell's icon, which the client always has (a missing one leaves the word). Cropped as ElvUI crops
--- icons, as high as the text. A partial block or absorb is the number and the icon.
-ns.DEFEND = "Interface\\Icons\\Ability_Defend"
--- The spell whose icon stands for a flag or event; Miss, Resist, Evade and Deflect keep their word.
-local ICON_SPELLS = {
-    ABSORB = 17, -- Power Word: Shield
-    DODGE = 5277, -- Evasion
-    PARRY = 3127, -- Parry
-    IMMUNE = 642, -- Divine Shield
-    INTERRUPT = 1766, -- Kick
-    REFLECT = 23920, -- Spell Reflection
+-- Icons instead of words, if set, as the words are too wide for a portrait: the plugin's own, in
+-- ElvUI's style (Media\*.tga, built from Media\src\*.svg by tools\icons.sh), as high as the text.
+-- A partial block or absorb is the number and the icon. Resist, evade, deflect, reflect and
+-- interrupt keep their words. The icon by flag or event, and its file:
+local ICONS = {
+    BLOCK = "Block",
+    BLOCK_REDUCED = "Block",
+    ABSORB = "Absorb",
+    DODGE = "Dodge",
+    PARRY = "Parry",
+    MISS = "Miss",
+    IMMUNE = "Immune",
 }
-local CROP = ":0:0:0:0:64:64:5:59:5:59|t"
--- Built once per texture: the icon's escape, and a format of the number with it.
----@type table<string|number, string>
-local marks, withNumber = {}, {}
-
----An icon as a texture escape in text.
----@param texture string|number a path or file ID
----@return string
-function ns.Mark(texture)
-    local mark = marks[texture]
-    if not mark then
-        mark = "|T" .. texture .. CROP
-        marks[texture], withNumber[texture] = mark, "%s " .. mark
-    end
-    return mark
-end
-
----The shield a unit blocks with: the player's own off hand if it is a shield, else Defensive's.
----@param unit string?
----@return string|number
-local function Shield(unit)
-    if unit == "player" then
-        local id = GetInventoryItemID("player", INVSLOT_OFFHAND)
-        if id then
-            local _, _, _, equipLoc, icon = C_Item.GetItemInfoInstant(id)
-            if equipLoc == "INVTYPE_SHIELD" then return icon end
-        end
-    end
-    return ns.DEFEND
-end
-
----The icon for a flag or event; nil when icons are off, for one without an icon, or when the client
----lacks the spell's icon.
----@param kind string the flags, or the event when shown as a word
----@param unit string?
----@param text AddonTextSettings
----@return (string|number)?
-local function Icon(kind, unit, text)
-    if not text.icons then return nil end
-    if kind == "BLOCK" or kind == "BLOCK_REDUCED" then return Shield(unit) end
-    local spell = ICON_SPELLS[kind]
-    if not spell then return nil end
-    return (C_Spell.GetSpellTexture(spell))
+-- Built once: each icon as a texture escape, and a format of the number with it.
+---@type table<string, string>
+ns.marks = {}
+---@type table<string, string>
+local withNumber = {}
+for kind, file in pairs(ICONS) do
+    ns.marks[kind] = "|TInterface\\AddOns\\" .. addon .. "\\Media\\" .. file .. ":0|t"
+    withNumber[kind] = "%s " .. ns.marks[kind]
 end
 
 -- Blizzard's words for what is shown as a word, by event or flag (FrameXML's CombatFeedback.lua).
@@ -129,9 +93,8 @@ end
 ---@param flags string|AddonSecret
 ---@param amount number|AddonSecret
 ---@param school number|AddonSecret
----@param unit string? the frame's unit, for the shield it blocks with
 ---@return string? format, (string|AddonSecret)? value, number? scale, number? r, number? g, number? b
-function ns.Feedback(event, flags, amount, school, unit)
+function ns.Feedback(event, flags, amount, school)
     if ns.IsSecret(event) or ns.IsSecret(flags) then return nil end
     ---@cast event string
     ---@cast flags string
@@ -145,11 +108,7 @@ function ns.Feedback(event, flags, amount, school, unit)
         elseif flags == "GLANCING" then
             scale = GLANCING
         end
-        local icon, format = Icon(flags, unit, text), "%s"
-        if icon then
-            ns.Mark(icon)
-            format = withNumber[icon]
-        end
+        local format = text.icons and withNumber[flags] or "%s"
         return format, Amount(amount, text), scale, DamageColor(school, text)
     elseif event == "HEAL" or event == "ENERGIZE" then
         local heal = event == "HEAL"
@@ -158,16 +117,13 @@ function ns.Feedback(event, flags, amount, school, unit)
         return "%s", Amount(amount, text), flags == "CRITICAL" and text.crit or 1, color.r, color.g, color.b
     end
     if not text.misses then return nil end
-    ---@type string?, number
-    local word, scale
+    -- What it is: a WOUND without damage is its flag (absorb, block, resist), else a miss.
+    local kind, scale = event, WORD_SIZES[event] or 1
     if event == "WOUND" then
-        word = WORDS[AVOIDED[flags] and flags or "MISS"]
+        kind = AVOIDED[flags] and flags or "MISS"
         scale = AVOIDED[flags] and SMALL or 1
-    else
-        word, scale = WORDS[event], WORD_SIZES[event] or 1
     end
-    local icon = Icon(event == "WOUND" and flags or event, unit, text)
-    if icon then word = ns.Mark(icon) end
+    local word = text.icons and ns.marks[kind] or WORDS[kind]
     if not word then return nil end
     return "%s", word, scale, colors.miss.r, colors.miss.g, colors.miss.b
 end
@@ -200,7 +156,7 @@ function ns.ShowText(holder, event, flags, amount, school)
         ns.Log("debug", "combat: text is off on {1}", holder.key)
         return
     end
-    local format, value, scale, r, g, b = ns.Feedback(event, flags, amount, school, ns.Unit(holder))
+    local format, value, scale, r, g, b = ns.Feedback(event, flags, amount, school)
     if not format then
         if ns.Logging("debug") then
             ns.Log("debug", "combat: nothing to show for {1} {2}", ns.Shown(event), ns.Shown(flags))

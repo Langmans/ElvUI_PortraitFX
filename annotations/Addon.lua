@@ -53,8 +53,7 @@ AceGUIWidgetLSMlists = nil
 ---@field samples table[] test mode's events: event, flags, amount, school
 ---@field testing boolean?
 ---@field FALLBACK_SIZE number
----@field DEFEND string the shield icon for a block when the unit's own is unknown
----@field Mark fun(texture: string|number): string an icon as a texture escape in text
+---@field marks table<string, string> the plugin's icons as texture escapes, by flag or event
 ---@field TEST_INTERVAL number
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
@@ -62,7 +61,7 @@ AceGUIWidgetLSMlists = nil
 ---@field TextRegion fun(frame: AddonFrame, place: AddonPlace): Region
 ---@field IconSpot fun(frame: AddonFrame, place: AddonPlace): Region, FramePoint, number
 ---@field anchors string[]
----@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret, unit: string?): string?, (string|AddonSecret)?, number?, number?, number?, number?
+---@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret): string?, (string|AddonSecret)?, number?, number?, number?, number?
 ---@field ShowText fun(holder: AddonHolder, event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret)
 ---@field HideText fun(holder: AddonHolder)
 ---@field IconFrame fun(holder: AddonHolder): AddonIconFrame

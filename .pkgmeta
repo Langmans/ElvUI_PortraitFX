@@ -4,5 +4,7 @@ ignore:
   - annotations
   - coverage
   - tests
+  - tools
+  - Media/src
   - elvui_portraitfx-dev-1.rockspec
   - stylua.toml
