@@ -27,7 +27,9 @@ ElvUI's options (`/ec`) → Plugins → **Portrait FX**:
   whole frame, or automatic; a point on it and an X/Y offset. Below them the strata and level of
   both (the text is always above the icon) and how much goes to OAP Debug and _DebugLog.
 - **Combat text:** font, size (as a part of the portrait's height), outline, critical size, time
-  shown, which kinds of event, short numbers (in ElvUI's number style), colour by school, the
+  shown, icons instead of words (your own shield for a block, Power Word: Shield for an absorb,
+  Evasion for a dodge, and so on; a partial block or absorb is the number and the icon), which
+  kinds of event, short numbers (in ElvUI's number style), colour by school, the
   colours.
 - **Crowd control:** countdown numbers, interrupts, defensives.
 

@@ -164,6 +164,30 @@ function NewClient(opts)
         },
     }
 
+    -- Items and spells: client.offhand is the player's off hand item ID (nil: none), client.items
+    -- each item's equip location and icon, Power Word: Shield's icon the client's.
+    INVSLOT_OFFHAND = 17
+    client.items = { [2129] = { "INVTYPE_SHIELD", 134955 }, [7298] = { "INVTYPE_HOLDABLE", 133731 } }
+    function GetInventoryItemID(unit, slot)
+        assert(unit == "player" and slot == INVSLOT_OFFHAND, "the player's off hand")
+        return client.offhand
+    end
+    C_Item = {
+        GetItemInfoInstant = function(id)
+            local item = client.items[id]
+            return id, "Armor", "Shields", item[1], item[2], 4, 6
+        end,
+    }
+    -- The spells whose icons stand for words, with their icons in Forever's SpellMisc; none at all
+    -- with client.noSpellIcons.
+    local SPELL_ICONS = { [17] = 135940, [5277] = 136205, [3127] = 132269, [642] = 135896, [1766] = 132219 }
+    C_Spell = {
+        GetSpellTexture = function(id)
+            if client.noSpellIcons then return nil end
+            return SPELL_ICONS[id]
+        end,
+    }
+
     -- The number formatters take hidden numbers and hand back hidden text.
     function BreakUpLargeNumbers(n)
         if n == SECRET then return SECRET end

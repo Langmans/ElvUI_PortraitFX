@@ -25,7 +25,7 @@ describe("test mode", function()
             seen[client:Holder("player").text:GetText()] = true
         end
         assert.is_true(seen["2,468"])
-        assert.is_true(seen.Dodge)
+        assert.is_true(seen[client.ns.Mark(136205)], "a dodge, as Evasion's icon")
     end)
 
     it("stops on request and when combat starts", function()

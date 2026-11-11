@@ -53,7 +53,8 @@ AceGUIWidgetLSMlists = nil
 ---@field samples table[] test mode's events: event, flags, amount, school
 ---@field testing boolean?
 ---@field FALLBACK_SIZE number
----@field BLOCK_ICON string the texture escape after a partly blocked number
+---@field DEFEND string the shield icon for a block when the unit's own is unknown
+---@field Mark fun(texture: string|number): string an icon as a texture escape in text
 ---@field TEST_INTERVAL number
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
@@ -61,7 +62,7 @@ AceGUIWidgetLSMlists = nil
 ---@field TextRegion fun(frame: AddonFrame, place: AddonPlace): Region
 ---@field IconSpot fun(frame: AddonFrame, place: AddonPlace): Region, FramePoint, number
 ---@field anchors string[]
----@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret): string?, (string|AddonSecret)?, number?, number?, number?, number?
+---@field Feedback fun(event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret, unit: string?): string?, (string|AddonSecret)?, number?, number?, number?, number?
 ---@field ShowText fun(holder: AddonHolder, event: string|AddonSecret, flags: string|AddonSecret, amount: number|AddonSecret, school: number|AddonSecret)
 ---@field HideText fun(holder: AddonHolder)
 ---@field IconFrame fun(holder: AddonHolder): AddonIconFrame
@@ -125,7 +126,7 @@ AceGUIWidgetLSMlists = nil
 ---@field energize boolean
 ---@field short boolean
 ---@field schools boolean
----@field blockIcon boolean a small shield after a partly blocked number
+---@field icons boolean blocks and absorbs as icons instead of words
 ---@field colors AddonTextColors
 
 ---@class AddonCCSettings

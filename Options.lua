@@ -274,7 +274,7 @@ local function TextTab()
         kinds = { type = "header", order = 10, name = L.KINDS },
         short = Toggle(20, L.SHORT, L.SHORT_DESC),
         schools = Toggle(21, L.SCHOOLS, L.SCHOOLS_DESC),
-        blockIcon = Toggle(22, L.BLOCK_ICON, L.BLOCK_ICON_DESC),
+        icons = Toggle(22, L.ICONS, L.ICONS_DESC),
         colors = ColorsBox(),
     }
     args.size.isPercent = true
