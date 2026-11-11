@@ -54,6 +54,8 @@ P[addon] = {
         short = false,
         schools = true,
         icons = true,
+        -- The absorbing buff's icon beside an absorb, drawn by the game (CrowdControl.lua).
+        absorbAura = true,
         -- Blizzard's own portrait text colours.
         colors = {
             physical = { r = 1, g = 1, b = 1 },

@@ -8,9 +8,11 @@ return {
     include = {
         "^%./[%w]+$",
         "^%./Locales/",
+        "^%./Data/",
         "^[%w]+$",
         "^Locales/",
+        "^Data/",
     },
-    exclude = { "tests/", "annotations/" },
-    includeuntestedfiles = { "Locales" },
+    exclude = { "tests/", "annotations/", "tools/" },
+    includeuntestedfiles = { "Locales", "Data" },
 }

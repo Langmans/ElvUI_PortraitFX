@@ -81,6 +81,11 @@ local function Build(frame)
     holder.textFrame:SetAllPoints(holder)
     holder.text = holder.textFrame:CreateFontString(nil, "OVERLAY")
     holder.text:Hide()
+    -- The absorbing buff's icon, right of the text while an absorb shows (CombatText.lua).
+    holder.absorb = CreateFrame("Frame", nil, holder.textFrame)
+    holder.absorb:SetPoint("LEFT", holder.text, "RIGHT", 2, 0)
+    holder.absorb:Hide()
+    ns.BuildAbsorb(holder)
     ns.holders[frame] = holder
     ns.holderList[#ns.holderList + 1] = holder
     -- ElvUI mostly builds its frames after the plugin started, so each is logged as it comes.

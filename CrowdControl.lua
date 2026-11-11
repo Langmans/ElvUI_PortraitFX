@@ -2,7 +2,8 @@
 -- frame one container with three aura slots, the plugin only giving each a texture and a
 -- cooldown. So they keep working in combat while WoW: Forever hides aura details from addons.
 -- Above the slots the game's loss of control for the frame's unit (as Blizzard's own nameplates
--- read it), which also knows interrupts, silences and roots, which are no aura.
+-- read it), which also knows interrupts, silences and roots, which are no aura. A second container
+-- per frame shows the absorbing buff's icon beside the combat text.
 
 local _, ns = ... ---@type string, AddonNamespace
 local E = ElvUI[1]
@@ -76,6 +77,39 @@ local function Container(holder)
     return container
 end
 
+---The absorbing buff's container: one slot, the unit's HELPFUL buffs limited to the absorb spells
+---(Data/Absorbs.lua), so the game draws the icon of the one on the unit, also in combat when the
+---addon cannot read buffs. The game matches spell IDs only on units the player can assist.
+---@param holder AddonHolder
+---@return AddonAuraContainer
+local function AbsorbContainer(holder)
+    local frame = holder.absorb
+    local container = CreateFrame("AuraContainer", nil, frame, "CustomAuraContainerTemplate") --[[@as AddonAuraContainer]]
+    container:SetAllPoints(frame)
+    container:SetEditModePreviewEnabled(false)
+    container:AddAuraSlot("absorb", "HELPFUL", {
+        candidateFilters = { includeSpellIDs = ns.absorbSpells },
+        ---@param button AddonAuraButton the game's aura button
+        initializeFrame = function(button)
+            button:SetAllPoints(frame)
+            button:EnableMouse(false)
+            button:SetIcon(Icon(button))
+        end,
+    })
+    return container
+end
+
+---Makes a frame's absorbing buff's icon, on holder.absorb.
+---@param holder AddonHolder
+function ns.BuildAbsorb(holder)
+    local ok, container = pcall(AbsorbContainer, holder)
+    if ok then
+        holder.absorbContainer = container
+    else
+        ns.Log("error", "cc: no absorb container on {1}: {2}", holder.key, tostring(container))
+    end
+end
+
 ---Updates a frame's loss of control when its countdown runs out.
 ---@param cooldown AddonCooldown
 local function LossDone(cooldown)
@@ -112,20 +146,28 @@ function ns.LayoutCC(holder, region, point, size, x, y)
     cc:SetSize(size, size)
 end
 
----The aura slots and the loss of control show the frame's unit, as it is now.
+---A container, if on, shows a unit, and reads its auras again.
+---@param container AddonAuraContainer?
+---@param unit string
+local function Follow(container, unit)
+    if not container or not container:IsEnabled() then return end
+    if container:GetUnit() ~= unit then container:SetUnit(unit) end
+    container:UpdateAllAuras()
+end
+
+---The aura slots, the absorbing buff and the loss of control show the frame's unit, as it is now.
 ---@param holder AddonHolder
 function ns.RefreshCC(holder)
     ns.UpdateLoss(holder)
-    local container = holder.container
-    if not container or not container:IsEnabled() then return end
     -- "none", the client's token for no unit, while the frame has none: SetUnit takes only a string.
     local unit = ns.Unit(holder) or NO_UNIT
-    if container:GetUnit() ~= unit then container:SetUnit(unit) end
-    container:UpdateAllAuras()
+    Follow(holder.container, unit)
+    Follow(holder.absorbContainer, unit)
     if ns.Logging("debug") then ns.Log("debug", "cc: {1} shows {2}", holder.key, unit) end
 end
 
----A frame's icon after a settings change: on or off, the defensives, countdown numbers.
+---A frame's icon after a settings change: on or off, the defensives, countdown numbers; and the
+---absorbing buff's icon, on with the frame's text.
 ---@param holder AddonHolder
 function ns.ApplyCC(holder)
     local db = ns.db()
@@ -137,6 +179,9 @@ function ns.ApplyCC(holder)
         for _, key in ipairs(DEFENSIVES) do
             container:SetAuraSlotEnabled(key, db.cc.defensives)
         end
+    end
+    if holder.absorbContainer then
+        holder.absorbContainer:SetEnabled(db.text.absorbAura and db.units[holder.key].text)
     end
     for _, cooldown in ipairs(holder.cooldowns) do
         cooldown:SetHideCountdownNumbers(not db.cc.numbers)

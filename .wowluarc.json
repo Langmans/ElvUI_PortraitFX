@@ -1,7 +1,7 @@
 {
     "flavors": ["forever"],
     "library": ["annotations/"],
-    "ignore": ["tests/", "coverage/", ".release/", ".lua/", ".luarocks/", ".busted", ".luacov", "*.rockspec"],
+    "ignore": ["tests/", "tools/", "coverage/", ".release/", ".lua/", ".luarocks/", ".busted", ".luacov", "*.rockspec"],
     "diagnostics": {
         "enable": [
             "need-check-nil",

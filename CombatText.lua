@@ -128,20 +128,22 @@ function ns.Feedback(event, flags, amount, school)
     return "%s", word, scale, colors.miss.r, colors.miss.g, colors.miss.b
 end
 
----Fades the text in, holds it and fades it out.
+---Fades the text, and the absorbing buff's icon beside it, in, holds them and fades them out.
 ---@param holder AddonHolder
 local function Fade(holder)
     local fadeIn, hold, fadeOut = COMBATFEEDBACK_FADEINTIME, ns.db().text.hold, COMBATFEEDBACK_FADEOUTTIME
     local t = GetTime() - holder.started
+    local alpha = 1
     if t < fadeIn then
-        holder.text:SetAlpha(t / fadeIn)
-    elseif t < fadeIn + hold then
-        holder.text:SetAlpha(1)
-    elseif t < fadeIn + hold + fadeOut then
-        holder.text:SetAlpha(1 - (t - fadeIn - hold) / fadeOut)
-    else
+        alpha = t / fadeIn
+    elseif t >= fadeIn + hold + fadeOut then
         ns.HideText(holder)
+        return
+    elseif t >= fadeIn + hold then
+        alpha = 1 - (t - fadeIn - hold) / fadeOut
     end
+    holder.text:SetAlpha(alpha)
+    holder.absorb:SetAlpha(alpha)
 end
 
 ---Shows an event on a frame, if its text is switched on.
@@ -169,18 +171,30 @@ function ns.ShowText(holder, event, flags, amount, school)
     ---@cast g number
     ---@cast b number
     local text, look = holder.text, db.text
-    text:SetFont(E.LSM:Fetch("font", look.font), holder.size * look.size * scale, look.outline)
+    local height = holder.size * look.size * scale
+    text:SetFont(E.LSM:Fetch("font", look.font), height, look.outline)
     text:SetFormattedText(format, value)
     text:SetTextColor(r, g, b)
     text:SetAlpha(0)
     text:Show()
+    -- An absorb (its flags are not hidden once Feedback showed something) gets the absorbing buff's
+    -- icon beside it, as high as the text; the game leaves it empty where no such buff is.
+    local absorb = holder.absorb
+    if look.absorbAura and holder.absorbContainer and event == "WOUND" and flags == "ABSORB" then
+        absorb:SetSize(height, height)
+        absorb:SetAlpha(0)
+        absorb:Show()
+    else
+        absorb:Hide()
+    end
     holder.started = GetTime()
     holder:SetScript("OnUpdate", Fade)
 end
 
----Hides a frame's text at once.
+---Hides a frame's text, and the absorbing buff's icon beside it, at once.
 ---@param holder AddonHolder
 function ns.HideText(holder)
     holder.text:Hide()
+    holder.absorb:Hide()
     holder:SetScript("OnUpdate", nil)
 end

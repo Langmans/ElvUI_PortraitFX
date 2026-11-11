@@ -54,6 +54,8 @@ AceGUIWidgetLSMlists = nil
 ---@field testing boolean?
 ---@field FALLBACK_SIZE number
 ---@field marks table<string, string> the plugin's icons as texture escapes, by flag or event
+---@field absorbSpells table<number, boolean> the absorb spells (Data/Absorbs.lua), by spell ID
+---@field BuildAbsorb fun(holder: AddonHolder)
 ---@field TEST_INTERVAL number
 ---@field PREVIEW_DURATION number
 ---@field db fun(): AddonSettings
@@ -126,6 +128,7 @@ AceGUIWidgetLSMlists = nil
 ---@field short boolean
 ---@field schools boolean
 ---@field icons boolean blocks and absorbs as icons instead of words
+---@field absorbAura boolean the absorbing buff's icon beside an absorb
 ---@field colors AddonTextColors
 
 ---@class AddonCCSettings
@@ -206,6 +209,8 @@ AceGUIWidgetLSMlists = nil
 ---@field listening string? the unit its unit events are registered for
 ---@field text FontString
 ---@field textFrame Frame the text's frame, above everything of the icon
+---@field absorb Frame the absorbing buff's icon's frame, right of the text
+---@field absorbContainer AddonAuraContainer? its aura container, nil on a client without one
 ---@field cc Frame the icon's frame
 ---@field cooldowns Cooldown[]
 ---@field container AddonAuraContainer? Blizzard's custom aura container, nil on a client without one

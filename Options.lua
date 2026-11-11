@@ -275,6 +275,7 @@ local function TextTab()
         short = Toggle(20, L.SHORT, L.SHORT_DESC),
         schools = Toggle(21, L.SCHOOLS, L.SCHOOLS_DESC),
         icons = Toggle(22, L.ICONS, L.ICONS_DESC),
+        absorbAura = Toggle(23, L.ABSORB_AURA, L.ABSORB_AURA_DESC),
         colors = ColorsBox(),
     }
     args.size.isPercent = true

@@ -11,6 +11,7 @@
 Locales\enUS.lua
 Core.lua
 Debug.lua
+Data\Absorbs.lua
 Spot.lua
 CombatText.lua
 CrowdControl.lua
