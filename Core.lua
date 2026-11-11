@@ -152,7 +152,6 @@ function M:Initialize()
     for _, frame in ipairs(E.oUF.objects) do
         ns.Attach(frame)
     end
-    ns.Log("info", "start: {1} frames taken on", #ns.holderList)
     -- UNIT_COMBAT and the loss of control each frame registers for its own unit (Holder.lua).
     for event in pairs(CHANGES) do
         self:RegisterEvent(event, "UnitChanged")

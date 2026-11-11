@@ -83,6 +83,8 @@ local function Build(frame)
     holder.text:Hide()
     ns.holders[frame] = holder
     ns.holderList[#ns.holderList + 1] = holder
+    -- ElvUI mostly builds its frames after the plugin started, so each is logged as it comes.
+    ns.Log("info", "frame: {1} taken on", holder.key)
     return holder
 end
 

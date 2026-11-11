@@ -90,7 +90,7 @@ game, never compared or tested. So:
 ### Debugging in game
 
 With OAP Debug (`/oapd`) or _DebugLog installed the plugin sends lines there; Frames tab → OAP Debug
-sets how much. Normal: how many frames it took on at login, an aura container it could not make
+sets how much. Normal: each frame it takes on, an aura container it could not make
 (with the game's error), each loss of control shown. Detailed adds every combat event on a frame
 (event, flags, unit, amount or "hidden") and why one showed nothing. Metrics counts both.
 
